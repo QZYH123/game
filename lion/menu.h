@@ -14,6 +14,7 @@
 
 // 前向声明
 class LevelSelect;
+class SettingsPage;
 
 namespace Ui {
 class menu;
@@ -59,10 +60,21 @@ private slots:
      * @brief 处理从选关界面返回的事件
      */
     void onBackFromLevelSelect();
+    
+    /**
+     * @brief 处理Settings按钮点击事件
+     */
+    void onSettingsButtonClicked();
+    
+    /**
+     * @brief 处理从设置页面返回的事件
+     */
+    void onBackFromSettings();
 
 private:
     Ui::menu *ui;                 ///< Qt Designer 生成的 UI 指针
     LevelSelect* level_select;    ///< 选关界面指针
+    SettingsPage* settings_page;  ///< 设置页面指针
 };
 
 #endif // MENU_H

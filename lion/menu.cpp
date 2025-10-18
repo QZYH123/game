@@ -6,6 +6,7 @@
 #include "menu.h"
 #include "ui_menu.h"
 #include "LevelSelect.h"
+#include "SettingsPage.h"
 #include <QLabel>
 
 /**
@@ -16,6 +17,7 @@ menu::menu(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::menu)
     , level_select(nullptr)
+    , settings_page(nullptr)
 {
     ui->setupUi(this);
     ui_load();
@@ -24,8 +26,13 @@ menu::menu(QWidget *parent)
     level_select = new LevelSelect();
     level_select->hide();
     
+    // 创建设置页面
+    settings_page = new SettingsPage();
+    settings_page->hide();
+    
     // 连接信号槽
     connect(level_select, SIGNAL(backToMenu()), this, SLOT(onBackFromLevelSelect()));
+    connect(settings_page, SIGNAL(backToMenu()), this, SLOT(onBackFromSettings()));
 }
 /**
  * @brief 加载主菜单界面元素并设置样式与布局
@@ -96,8 +103,9 @@ void menu::ui_load(){
         buttons[i]->raise();
     }
     
-    // 连接Start按钮的信号槽
+    // 连接按钮的信号槽
     connect(buttons[0], SIGNAL(clicked()), this, SLOT(onStartButtonClicked()));
+    connect(buttons[2], SIGNAL(clicked()), this, SLOT(onSettingsButtonClicked()));
 }
 void menu::onStartButtonClicked()
 {
@@ -113,6 +121,20 @@ void menu::onBackFromLevelSelect()
     this->show();
 }
 
+void menu::onSettingsButtonClicked()
+{
+    // 隐藏主菜单，显示设置页面
+    this->hide();
+    settings_page->show();
+}
+
+void menu::onBackFromSettings()
+{
+    // 隐藏设置页面，显示主菜单
+    settings_page->hide();
+    this->show();
+}
+
 /**
  * @brief 析构并释放UI资源
  */
@@ -120,4 +142,5 @@ menu::~menu()
 {
     delete ui;
     delete level_select;
+    delete settings_page;
 }
