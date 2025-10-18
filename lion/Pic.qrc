@@ -4,6 +4,7 @@
         <file>Picture/menu.jpg</file>
         <file>Picture/pickbkg.png</file>
         <file>Picture/pickbkg.jpg</file>
+        <file>Picture/setting_page.png</file>
     </qresource>
     <qresource prefix="/ui">
         <file>Picture/button.jpg</file>
