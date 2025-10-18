@@ -1,0 +1,68 @@
+/**
+ * @file menu.h
+ * @brief 主菜单窗口类声明
+ * @author 开发团队
+ * @date 2025-10-16
+ * @version 0.1.0
+ */
+
+#ifndef MENU_H
+#define MENU_H
+
+#include <QMainWindow>
+#include <QPushButton>
+
+// 前向声明
+class LevelSelect;
+
+namespace Ui {
+class menu;
+}
+
+/**
+ * @class menu
+ * @brief 主菜单窗口，负责菜单界面加载与展示
+ *
+ * 说明：此类仅进行 UI 组装与布局，不涉及业务逻辑。
+ */
+class menu : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    /**
+     * @brief 构造主菜单窗口
+     * @param parent 父窗口指针
+     */
+    explicit menu(QWidget *parent = nullptr);
+
+    /**
+     * @brief 析构函数，释放UI资源
+     */
+    ~menu();
+
+    /**
+     * @brief 加载并布局主菜单界面
+     * @note 只进行界面初始化与样式设置
+     */
+    void ui_load();
+
+    QPushButton** buttons;        ///< 菜单按钮数组，顺序为 Start/Continue/Settings/Exit
+
+private slots:
+    /**
+     * @brief 处理Start按钮点击事件
+     */
+    void onStartButtonClicked();
+
+    /**
+     * @brief 处理从选关界面返回的事件
+     */
+    void onBackFromLevelSelect();
+
+private:
+    Ui::menu *ui;                 ///< Qt Designer 生成的 UI 指针
+    LevelSelect* level_select;    ///< 选关界面指针
+};
+
+#endif // MENU_H

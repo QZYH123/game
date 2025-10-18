@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/back">
+        <file>Picture/MenuBack.jpg</file>
+        <file>Picture/menu.jpg</file>
+        <file>Picture/pickbkg.png</file>
+        <file>Picture/pickbkg.jpg</file>
+    </qresource>
+    <qresource prefix="/ui">
+        <file>Picture/button.jpg</file>
+        <file>Picture/button_y.png</file>
+        <file>Picture/title.png</file>
+        <file>Picture/backbtn.png</file>
+    </qresource>
+</RCC>
