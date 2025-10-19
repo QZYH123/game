@@ -11,6 +11,7 @@
 
 #include <QMainWindow>
 #include <QPushButton>
+#include "GameScene.h"
 
 // 前向声明
 class LevelSelect;
@@ -71,10 +72,16 @@ private slots:
      */
     void onBackFromSettings();
 
+    /**
+     * @brief 处理关卡选择事件
+     */
+    void onLevelSelected(int levelIndex);
+
 private:
     Ui::menu *ui;                 ///< Qt Designer 生成的 UI 指针
     LevelSelect* level_select;    ///< 选关界面指针
     SettingsPage* settings_page;  ///< 设置页面指针
+    GameScene* gameScene;
 };
 
 #endif // MENU_H

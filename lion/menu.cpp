@@ -18,9 +18,11 @@ menu::menu(QWidget *parent)
     , ui(new Ui::menu)
     , level_select(nullptr)
     , settings_page(nullptr)
+    //新增gameScene初始化
+    ,gameScene(nullptr)
 {
     ui->setupUi(this);
-    ui_load();
+
     
     // 创建选关界面
     level_select = new LevelSelect();
@@ -29,6 +31,7 @@ menu::menu(QWidget *parent)
     // 创建设置页面
     settings_page = new SettingsPage();
     settings_page->hide();
+    ui_load();
     
     // 连接信号槽
     connect(level_select, SIGNAL(backToMenu()), this, SLOT(onBackFromLevelSelect()));
@@ -106,6 +109,7 @@ void menu::ui_load(){
     // 连接按钮的信号槽
     connect(buttons[0], SIGNAL(clicked()), this, SLOT(onStartButtonClicked()));
     connect(buttons[2], SIGNAL(clicked()), this, SLOT(onSettingsButtonClicked()));
+    connect(level_select, &LevelSelect::levelSelected, this, &menu::onLevelSelected);
 }
 void menu::onStartButtonClicked()
 {
@@ -134,7 +138,27 @@ void menu::onBackFromSettings()
     settings_page->hide();
     this->show();
 }
+// 实现关卡选择处理函数
+void menu::onLevelSelected(int levelIndex)
+{
+    qDebug() << "收到关卡索引：" << levelIndex; // 检查是否打印
+    // 隐藏选关界面
+    level_select->hide();
 
+    // 初始化游戏场景（仅测试第一关，即levelIndex=0）
+    if (levelIndex == 0) {
+        if (!gameScene) {
+            gameScene = new GameScene(levelIndex, nullptr);
+            // 连接游戏场景返回信号
+            connect(gameScene, &GameScene::backToLevelSelect, this, [this]() {
+                gameScene->hide();
+                level_select->show();
+            });
+        }
+        qDebug() << "显示GameScene"; // 确认是否执行到此处
+        gameScene->show();
+    }
+}
 /**
  * @brief 析构并释放UI资源
  */
