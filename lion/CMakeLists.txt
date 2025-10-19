@@ -34,6 +34,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         LevelSelect.h LevelSelect.cpp
         GameSettings.h
         SettingsPage.h SettingsPage.cpp
+
+
+        GameScene.h
+        GameScene.cpp
+        LionAnimation.h
+        LionAnimation.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET LionJump APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

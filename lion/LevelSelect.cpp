@@ -107,6 +107,7 @@ void LevelSelect::onLevelButtonClicked()
     if (button) {
         int levelIndex = button->property("levelIndex").toInt();
         if (isLevelUnlocked(levelIndex)) {
+            qDebug() << "发射关卡选择信号：" << levelIndex; // 调试输出
             emit levelSelected(levelIndex);
         }
     }
