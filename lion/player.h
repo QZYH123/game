@@ -22,10 +22,13 @@ public:
     virtual void right();
     void jump();
     void fall();
-    void setMoveState(bool left, bool right) {
-        isLeftPress = left;
-        isRightPress = right;
-    }
+    void update();
+    // void setMoveState(bool left, bool right) {
+    //     isLeftPress = left;
+    //     isRightPress = right;
+    // }
+    void setLeftPressed(bool pressed) { isLeftPress = pressed; }
+    void setRightPressed(bool pressed) { isRightPress = pressed; }
     void updateAnimationState();
     QPixmap getCurrentAnimationFrame();
     virtual bool left_touch();

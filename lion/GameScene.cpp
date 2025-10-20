@@ -76,27 +76,28 @@ void GameScene::mapInit(){
 void GameScene::gameStart()
 {
     Timer.start();
-    pl.setMoveState(leftpress,rightpress);
+    // pl.setMoveState(leftpress,rightpress);
     connect(&Timer,&QTimer::timeout,[=](){
-            if(!pl.is_ground())pl.isJump=1;//运动部分
-            if(pl.isJump)pl.fall();
-            if (!pl.isJump) { // 落地状态
-                if (leftpress || rightpress) {
-                    // 落地且有移动输入：确保动画定时器在运行
-                    if (!pl.animation->frameTimer->isActive()) {
-                        if (pl.isRight) {
-                            pl.animation->startRightLoop();
-                        } else {
-                            pl.animation->startLeftLoop();
-                        }
-                    }
-                } else {
-                    // 落地且无移动输入：停止动画（静止状态）
-                    pl.animation->frameTimer->stop();
-                }
-            } else {
-                // 空中状态：动画由跳跃逻辑控制（已实现）
-            }
+        pl.update();
+            // if(!pl.is_ground())pl.isJump=1;//运动部分
+            // if(pl.isJump)pl.fall();
+            // if (!pl.isJump) { // 落地状态
+            //     if (leftpress || rightpress) {
+            //         // 落地且有移动输入：确保动画定时器在运行
+            //         if (!pl.animation->frameTimer->isActive()) {
+            //             if (pl.isRight) {
+            //                 pl.animation->startRightLoop();
+            //             } else {
+            //                 pl.animation->startLeftLoop();
+            //             }
+            //         }
+            //     } else {
+            //         // 落地且无移动输入：停止动画（静止状态）
+            //         pl.animation->frameTimer->stop();
+            //     }
+            // } else {
+            //     // 空中状态：动画由跳跃逻辑控制（已实现）
+            // }
             if(leftpress){
                 background.mappositionl();
                 pl.left();
@@ -117,15 +118,17 @@ void GameScene::keyPressEvent(QKeyEvent *event) //按键事件
 {
     if (event->key() == Qt::Key_A && event->type())
     {
-        leftpress = 1;
-        pl.setMoveState(leftpress, rightpress);
+        // leftpress = 1;
+        // pl.setMoveState(leftpress, rightpress);
+        pl.setLeftPressed(true);
     }
-    if (event->key() == Qt::Key_D)
+    else if (event->key() == Qt::Key_D)
     {
-        rightpress = 1;
-        pl.setMoveState(leftpress, rightpress);
+        // rightpress = 1;
+        // pl.setMoveState(leftpress, rightpress);
+        pl.setRightPressed(true);
     }
-    if (event->key() == Qt::Key_K && !pl.isJump)
+    else if (event->key() == Qt::Key_K && !pl.isJump)
     {
         pl.jump();
     }
@@ -135,17 +138,20 @@ void GameScene::keyReleaseEvent(QKeyEvent *event)//松开按键事件
 {
     if (event->key() == Qt::Key_A && event->type())
     {
-        leftpress = 0;
+        // leftpress = 0;
+        pl.setLeftPressed(false);
     }
     if (event->key() == Qt::Key_D)
     {
-        rightpress = 0;
+        // rightpress = 0;
+        pl.setRightPressed(false);
     }
     update();
 }
 void GameScene::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+    block5.load(BLOCK5);
     painter.drawPixmap(background.map1_x, 0,XSIZE+5,YSIZE, background.map1); //绘制背景图
     painter.drawPixmap(background.map2_x, 0,XSIZE+5,YSIZE, background.map2);
     painter.drawPixmap(background.map3_x, 0,XSIZE+5,YSIZE, background.map3);
