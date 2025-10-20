@@ -24,8 +24,7 @@ public slots:
     void startJumpLoop();    // 跳跃循环
     // 帧切换定时器槽函数
     void onFrameTimerTimeout();
-
-private:
+public:
     QVector<QPixmap> left_frames;   // 向左帧序列
     QVector<QPixmap> right_frames;  // 向右帧序列
     QVector<QPixmap> jump_frames;   // 跳跃帧序列
@@ -38,6 +37,16 @@ private:
         Jump,
         None
     } currentType;  // 当前播放的动画类型
+public:
+    // 公共接口：获取当前帧
+    QPixmap getCurrentFrame() const {
+        switch (currentType) {
+        case Left: return left_frames[currentFrame];
+        case Right: return right_frames[currentFrame];
+        case Jump: return jump_frames[currentFrame];
+        default: return QPixmap();  // 默认返回空图
+        }
+    }
 
     // 重写绘制事件，显示当前帧
     void paintEvent(QPaintEvent *event) override;
