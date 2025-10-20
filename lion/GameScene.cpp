@@ -1,141 +1,205 @@
 /**
  * @file GameScene.cpp
  * @brief 游戏场景类实现（含动画控制测试）
- * @author 开发团队
+ * @author sqbsayori
  * @date 2025-10-19
  */
 
 #include "GameScene.h"
-#include "LionAnimation.h"  // 确保包含狮子动画类头文件
+#include "LionAnimation.h"
 #include <QPushButton>
+#include "qpainter.h"
+#include "QKeyEvent"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QKeyEvent>
 #include <QDebug>
+#include "Config.h"
+extern int map[24][24];
+int map[24][24];
+int map1[24][24];
+GameScene::GameScene(QWidget* parent): QWidget(parent){
 
-GameScene::GameScene(int levelIndex, QWidget* parent)
-    : QWidget(parent)
-    , currentLevel(levelIndex)
-    , lionAnimation(nullptr)
-    , backButton(nullptr)
-    , btnLeft(nullptr)
-    , btnRight(nullptr)
-    , btnJump(nullptr)
-{
     // 设置场景基本属性
-    setWindowTitle(QString("醒狮跃境 - 关卡 %1（动画测试）").arg(levelIndex + 1));
-    setFixedSize(1280, 720);  // 匹配项目分辨率
-
-    // 初始化场景元素（含动画控制按钮）
-    initScene();
+    setWindowTitle(TITLE);
+    setFixedSize(XSIZE, YSIZE);  // 匹配项目分辨率
+    memset(map,0,sizeof(map));
+    background=BackGround(1);
+    init();
+    gameStart();
+    updatenum=0;
 }
-
-void GameScene::initScene()
+GameScene::~GameScene() {
+    // 若有动态分配的资源，在此释放
+}
+void GameScene::init()
 {
-    // 创建主布局（垂直布局：动画区 + 控制区 + 返回区）
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(20, 20, 20, 20);  // 整体边距
+    setFixedSize(XSIZE, YSIZE);
+    setWindowTitle(TITLE);
+    Timer.setInterval(GAME_TICK);
+    mapInit();
+}
+void GameScene::mapInit(){
+    for(int i=0;i<24;i++)
+        for(int j=23;j>20;j--)
+            map[i][j]=1;
+    for(int i=0;i<17;i++)
+        map[i][19]=1;
+    for(int i=23;i>17;i--)
+        map[i][18]=1;
+    for(int i=7;i<22;i++)
+        map[i][16]=1;
+    for(int i=0;i<14;i++)
+        map[i][13]=1;
+    for(int i=4;i<9;i++)
+        map[i][5]=1;
+    for(int i=0;i<3;i++)
+        map[i][2]=1;
+    map[4][18]=map[20][15]=map[13][14]=map[16][14]=
+        map[17][14]=map[18][14]=map[21][14]=map[22][13]=
+        map[22][12]=map[20][12]=map[19][12]=map[18][12]=
+        map[2][11]=map[3][11]=map[22][11]=map[13][10]=
+        map[16][10]=map[17][10]=map[21][10]=map[0][9]=
+        map[1][9]=map[6][9]=map[7][9]=map[5][9]=
+        map[12][9]=map[19][9]=map[20][9]=map[21][9]=
+        map[11][8]=map[15][8]=map[16][8]=map[2][7]=
+        map[3][7]=map[10][7]=map[9][6]=map[17][6]=
+        map[18][6]=map[19][6]=map[23][6]=map[15][5]=
+        map[14][5]=map[20][5]=map[22][5]=map[12][4]=
+        map[13][4]=map[22][4]=map[4][3]=map[5][3]=
+        map[11][3]=map[10][2]=map[9][1]=map[9][0]=1;
+    for(int i=0;i<24;i++)
+        for(int j=0;j<24;j++)
+            map1[i][j]=map[i][j];
+}
+void GameScene::gameStart()
+{
+    Timer.start();
+    pl.setMoveState(leftpress,rightpress);
+    connect(&Timer,&QTimer::timeout,[=](){
+            if(!pl.is_ground())pl.isJump=1;//运动部分
+            if(pl.isJump)pl.fall();
+            if (!pl.isJump) { // 落地状态
+                if (leftpress || rightpress) {
+                    // 落地且有移动输入：确保动画定时器在运行
+                    if (!pl.animation->frameTimer->isActive()) {
+                        if (pl.isRight) {
+                            pl.animation->startRightLoop();
+                        } else {
+                            pl.animation->startLeftLoop();
+                        }
+                    }
+                } else {
+                    // 落地且无移动输入：停止动画（静止状态）
+                    pl.animation->frameTimer->stop();
+                }
+            } else {
+                // 空中状态：动画由跳跃逻辑控制（已实现）
+            }
+            if(leftpress){
+                background.mappositionl();
+                pl.left();
+                if(begin==false)
+                    begin=true;
+            }
+            if(rightpress){
+                background.mappositionr();
+                pl.right();
+                if(begin==false)
+                    begin=true;
+            }
+            update();
 
-    // 1. 关卡信息标签
-    QLabel* levelInfo = new QLabel(
-        QString("关卡 %1 - 动画测试\n点击按钮切换狮子动作（循环播放）")
-            .arg(currentLevel + 1),
-        this
-        );
-    levelInfo->setStyleSheet("color: white; font-size: 18px; "
-                             "background-color: rgba(0,0,0,0.5); "
-                             "padding: 10px; border-radius: 5px;");
-    mainLayout->addWidget(levelInfo, 0, Qt::AlignLeft);
-    mainLayout->addSpacing(10);  // 间距
-
-    // 2. 狮子动画显示区（核心）
-    lionAnimation = new LionAnimation(this);
-    lionAnimation->setFixedSize(600, 600);  // 放大动画显示区域，方便观察
-    lionAnimation->setStyleSheet("background-color: rgba(255,255,255,0.1);");  // 半透明白背景，突出动画
-    mainLayout->addWidget(lionAnimation, 1, Qt::AlignCenter);  // 居中显示
-    mainLayout->addSpacing(20);
-
-    // 3. 动画控制按钮区（水平布局：向左 + 向右 + 跳跃）
-    QHBoxLayout* controlLayout = new QHBoxLayout();
-    controlLayout->setSpacing(30);  // 按钮间距
-
-    // 向左动画按钮
-    btnLeft = new QPushButton("循环播放：向左移动", this);
-    styleButton(btnLeft);  // 统一样式
-    controlLayout->addWidget(btnLeft);
-
-    // 向右动画按钮
-    btnRight = new QPushButton("循环播放：向右移动", this);
-    styleButton(btnRight);
-    controlLayout->addWidget(btnRight);
-
-    // 跳跃动画按钮
-    btnJump = new QPushButton("循环播放：跳跃", this);
-    styleButton(btnJump);
-    controlLayout->addWidget(btnJump);
-
-    mainLayout->addLayout(controlLayout, 0);  // 添加到主布局
-    mainLayout->addSpacing(20);
-
-    // 4. 返回按钮
-    backButton = new QPushButton("返回选关", this);
-    backButton->setStyleSheet(R"(
-        QPushButton {
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            font-size: 18px;
-            padding: 12px 30px;
-            border-radius: 8px;
-        }
-        QPushButton:hover {
-            background-color: rgba(255,255,0,0.8);
-            color: black;
-        }
-    )");
-    mainLayout->addWidget(backButton, 0, Qt::AlignRight);
-
-    // 连接信号槽
-    connect(backButton, &QPushButton::clicked, this, &GameScene::onBackButtonClicked);
-    connect(btnLeft, &QPushButton::clicked, lionAnimation, &LionAnimation::startLeftLoop);
-    connect(btnRight, &QPushButton::clicked, lionAnimation, &LionAnimation::startRightLoop);
-    connect(btnJump, &QPushButton::clicked, lionAnimation, &LionAnimation::startJumpLoop);
-
-    // 设置背景
-    QPalette palette;
-    QPixmap bg(":/back/Picture/gamebkg.jpg");
-    if (bg.isNull()) {
-        qDebug() << "警告：背景图加载失败，使用默认颜色背景";
-        palette.setBrush(QPalette::Window, Qt::darkCyan);  // 备用颜色
-    } else {
-        palette.setBrush(QPalette::Window, bg.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+    });
+}
+void GameScene::keyPressEvent(QKeyEvent *event) //按键事件
+{
+    if (event->key() == Qt::Key_A && event->type())
+    {
+        leftpress = 1;
+        pl.setMoveState(leftpress, rightpress);
     }
-    setPalette(palette);
+    if (event->key() == Qt::Key_D)
+    {
+        rightpress = 1;
+        pl.setMoveState(leftpress, rightpress);
+    }
+    if (event->key() == Qt::Key_K && !pl.isJump)
+    {
+        pl.jump();
+    }
+    update();
+}
+void GameScene::keyReleaseEvent(QKeyEvent *event)//松开按键事件
+{
+    if (event->key() == Qt::Key_A && event->type())
+    {
+        leftpress = 0;
+    }
+    if (event->key() == Qt::Key_D)
+    {
+        rightpress = 0;
+    }
+    update();
+}
+void GameScene::paintEvent(QPaintEvent *event)
+{
+    QPainter painter(this);
+    painter.drawPixmap(background.map1_x, 0,XSIZE+5,YSIZE, background.map1); //绘制背景图
+    painter.drawPixmap(background.map2_x, 0,XSIZE+5,YSIZE, background.map2);
+    painter.drawPixmap(background.map3_x, 0,XSIZE+5,YSIZE, background.map3);
+    QPixmap currentFrame = pl.getCurrentAnimationFrame();
+    if (!currentFrame.isNull()) {
+        painter.drawPixmap(pl.x, pl.y, pl.w, pl.h,
+                           currentFrame.scaled(pl.w, pl.h, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    }
+    for(int i=0;i<24;i++)
+        for(int j=0;j<24;j++)
+        {
+            switch(map1[i][j]){
+            case 1:
+                painter.drawPixmap(i*B0, j*B0,W,W, block5);
+                break;
+            }
+        }
 }
 
-// 按钮样式统一设置
-void GameScene::styleButton(QPushButton* btn)
+BackGround::BackGround()
 {
-    btn->setStyleSheet(R"(
-        QPushButton {
-            background-color: rgba(0,100,200,0.7);
-            color: white;
-            font-size: 16px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            min-width: 180px;
-        }
-        QPushButton:hover {
-            background-color: rgba(0,150,255,0.9);
-            transform: scale(1.05);  //  hover时轻微放大
-        }
-        QPushButton:pressed {
-            background-color: rgba(0,80,180,0.9);
-        }
-    )");
+    map1_x = XSIZE;
+    map2_x = 0;
+    map3_x = -XSIZE;
+    m_scroll_speed = BG_SPEED;
 }
-
-void GameScene::onBackButtonClicked()
+BackGround::BackGround(int num)
 {
-    emit backToLevelSelect();  // 触发返回选关界面信号
+    if(num==1)
+    {
+        map1.load(BACK_GROUND1); //设置背景
+        map2.load(BACK_GROUND1);
+        map3.load(BACK_GROUND1);
+    }
+    if(num==2)
+    {
+        map1.load(BACK_GROUND2); //设置背景
+        map2.load(BACK_GROUND2);
+        map3.load(BACK_GROUND2);
+    }
+    map1_x = XSIZE;
+    map2_x = 0;
+    map3_x = -XSIZE;
+    m_scroll_speed = BG_SPEED;
+}
+void BackGround::mappositionr()
+{
+    map1_x -= BG_SPEED, map2_x -= BG_SPEED, map3_x -= BG_SPEED;
+    if (map1_x <= 0)
+        map1_x = XSIZE, map2_x = 0, map3_x = -XSIZE;
+}
+void BackGround::mappositionl()
+{
+    map1_x += BG_SPEED, map2_x += BG_SPEED, map3_x += BG_SPEED;
+    if (map2_x >= XSIZE)
+        map1_x = XSIZE, map2_x = 0, map3_x = -XSIZE;
 }

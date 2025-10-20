@@ -148,13 +148,13 @@ void menu::onLevelSelected(int levelIndex)
     // 初始化游戏场景（仅测试第一关，即levelIndex=0）
     if (levelIndex == 0) {
         if (!gameScene) {
-            gameScene = new GameScene(levelIndex, nullptr);
+            gameScene = new GameScene(nullptr);
             // 连接游戏场景返回信号
-            connect(gameScene, &GameScene::backToLevelSelect, this, [this]() {
-                gameScene->hide();
-                level_select->show();
-            });
-        }
+        //     connect(gameScene, &GameScene::backToLevelSelect, this, [this]() {
+        //         gameScene->hide();
+        //         level_select->show();
+        //     });
+         }
         qDebug() << "显示GameScene"; // 确认是否执行到此处
         gameScene->show();
     }

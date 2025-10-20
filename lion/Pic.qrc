@@ -32,4 +32,7 @@
               <file>Picture/jump_3.jpg</file>
               <file>Picture/jump_4.jpg</file>
           </qresource>
+          <qresource prefix="/">              
+              <file>res/stone11.png</file>
+          </qresource>
 </RCC>

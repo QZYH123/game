@@ -1,32 +1,33 @@
 #include "LionAnimation.h"
 #include <QPainter>
 #include <QDebug>
+#include "Config.h"
 
 LionAnimation::LionAnimation(QWidget *parent) : QWidget(parent)
     , currentFrame(0)
     , currentType(None)
 {
-    // 初始化定时器（每100ms切换一帧，可调整速度）
+    // 初始化定时器
     frameTimer = new QTimer(this);
-    frameTimer->setInterval(100);  // 100ms/帧 = 10帧/秒
+    frameTimer->setInterval(GAME_TICK);
     connect(frameTimer, &QTimer::timeout, this, &LionAnimation::onFrameTimerTimeout);
 
-    // 加载动画帧（确保图片已添加到qrc）
+    // 加载动画帧
     loadAnimationFrames();
 }
 
-// 加载帧（原函数，注意文件格式与qrc匹配）
+// 加载帧
 void LionAnimation::loadAnimationFrames() {
     // 清空原有帧
     left_frames.clear();
     right_frames.clear();
     jump_frames.clear();
 
-    // 加载向左帧（注意：如果实际是.png，这里要改后缀）
+    // 加载向左帧
     for (int i = 1; i <= 4; ++i) {
         QPixmap img(QString(":/lion/Picture/left_%1.jpg").arg(i));
         if (img.isNull()) {
-            qDebug() << "向左帧" << i << "加载失败！路径：" << QString(":/lion/left_%1.jpg").arg(i);
+            qDebug() << "向左帧" << i << "加载失败！路径：" << QString(":/lion/Picture/left_%1.jpg").arg(i);
         } else {
             // 缩放帧到合适大小（根据控件尺寸调整）
             left_frames.append(img.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation));
@@ -37,7 +38,7 @@ void LionAnimation::loadAnimationFrames() {
     for (int i = 1; i <= 4; ++i) {
         QPixmap img(QString(":/lion/Picture/right_%1.jpg").arg(i));
         if (img.isNull()) {
-            qDebug() << "向右帧" << i << "加载失败！路径：" << QString(":/lion/right_%1.jpg").arg(i);
+            qDebug() << "向右帧" << i << "加载失败！路径：" << QString(":/lion/Picture/right_%1.jpg").arg(i);
         } else {
             right_frames.append(img.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
@@ -47,7 +48,7 @@ void LionAnimation::loadAnimationFrames() {
     for (int i = 1; i <= 4; ++i) {
         QPixmap img(QString(":/lion/Picture/jump_%1.jpg").arg(i));
         if (img.isNull()) {
-            qDebug() << "跳跃帧" << i << "加载失败！路径：" << QString(":/lion/jump_%1.jpg").arg(i);
+            qDebug() << "跳跃帧" << i << "加载失败！路径：" << QString(":/lion/Picture/jump_%1.jpg").arg(i);
         } else {
             jump_frames.append(img.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
