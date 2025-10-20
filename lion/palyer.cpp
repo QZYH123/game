@@ -78,6 +78,29 @@ void player::fall()
 
     v0=v0+G*t;
 }
+void player::update()
+{
+    // 1. 处理跳跃/下落逻辑
+    if (!is_ground()) {
+        isJump = true;
+    }
+    if (isJump) {
+        fall(); // 下落计算
+    }
+
+    // 2. 处理移动逻辑（基于按键状态）
+    if (isLeftPress && !left_touch()) {
+        x = (x - MOVE_SPEED > 0) ? x - MOVE_SPEED : 0;
+        isRight = false;
+    }
+    if (isRightPress && !right_touch()) {
+        x = (x + MOVE_SPEED < XSIZE - w) ? x + MOVE_SPEED : XSIZE - w;
+        isRight = true;
+    }
+
+    // 3. 处理动画状态更新
+    updateAnimationState();
+}
 void player::updateAnimationState()
 {
     LionAnimation::AnimationType newType = LionAnimation::None;
