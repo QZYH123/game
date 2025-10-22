@@ -1,4 +1,0 @@
-D:/code/QT/game-lion_animation3/build/CMakeFiles/LionJump.dir
-D:/code/QT/game-lion_animation3/build/CMakeFiles/INSTALL.dir
-D:/code/QT/game-lion_animation3/build/CMakeFiles/ALL_BUILD.dir
-D:/code/QT/game-lion_animation3/build/CMakeFiles/ZERO_CHECK.dir
