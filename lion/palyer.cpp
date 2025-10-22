@@ -39,6 +39,7 @@ void player::right()
     isRight = true;
     animation->startRightLoop();
 }
+
 void player::left()
 {
     if(!left_touch())
@@ -46,11 +47,11 @@ void player::left()
     isRight = false;
     animation->startLeftLoop();
 }
+
 void player::jump()
 {
     v0 = -sqrt(2 * G * HEIGHT);
     isJump = 1;
-    animation->startJumpLoop();
     fall();
 }
 
@@ -66,6 +67,7 @@ void player::fall()
             v0=0;
             isJump=0;
         }
+        animation->startDownLoop();
     }
     else {
         if(head_touch()){
@@ -74,6 +76,7 @@ void player::fall()
             y = y / h * h + h;
         }
         y+=(int)(h1+0.5);
+        animation->startUpLoop();
     }
 
     v0=v0+G*t;
@@ -92,10 +95,14 @@ void player::update()
     if (isLeftPress && !left_touch()) {
         x = (x - MOVE_SPEED > 0) ? x - MOVE_SPEED : 0;
         isRight = false;
+        animation->isRight=isRight;
+        animation->update();
     }
     if (isRightPress && !right_touch()) {
         x = (x + MOVE_SPEED < XSIZE - w) ? x + MOVE_SPEED : XSIZE - w;
         isRight = true;
+        animation->isRight=isRight;
+        animation->update();
     }
 
     // 3. 处理动画状态更新
@@ -107,7 +114,7 @@ void player::updateAnimationState()
 
     // 优先级：跳跃动画 > 移动动画 > 静止
     if (isJump) {
-        newType = LionAnimation::Jump;
+        newType = LionAnimation::Up;
     } else if (isLeftPress) {
         newType = LionAnimation::Left;
     } else if (isRightPress) {
@@ -121,10 +128,14 @@ void player::updateAnimationState()
         case LionAnimation::Right:
             animation->startRightLoop();
             break;
-        case LionAnimation::Jump:
-            animation->startJumpLoop();
+        case LionAnimation::Up:
+            animation->startUpLoop();
+            break;
+        case LionAnimation::Down:
+            animation->startDownLoop();
             break;
         default:
+            animation->stop_start();
             animation->frameTimer->stop(); // 静止时停止动画
             break;
         }

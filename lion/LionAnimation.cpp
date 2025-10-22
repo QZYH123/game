@@ -21,7 +21,8 @@ void LionAnimation::loadAnimationFrames() {
     // 清空原有帧
     left_frames.clear();
     right_frames.clear();
-    jump_frames.clear();
+    up_frames.clear();
+    down_frames.clear();
 
     // 加载向左帧
     for (int i = 1; i <= 4; ++i) {
@@ -45,12 +46,21 @@ void LionAnimation::loadAnimationFrames() {
     }
 
     // 加载跳跃帧
-    for (int i = 1; i <= 4; ++i) {
+    for (int i = 1; i <= 2; ++i) {
         QPixmap img(QString(":/lion/Picture/jump_%1.jpg").arg(i));
         if (img.isNull()) {
             qDebug() << "跳跃帧" << i << "加载失败！路径：" << QString(":/lion/Picture/jump_%1.jpg").arg(i);
         } else {
-            jump_frames.append(img.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            up_frames.append(img.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        }
+    }
+    //加载向下帧
+    for (int i = 1; i <= 2; ++i) {
+        QPixmap img(QString(":/lion/Picture/down_%1.jpg").arg(i));
+        if (img.isNull()) {
+            qDebug() << "向下帧" << i << "加载失败！路径：" << QString(":/lion/Picture/down_%1.jpg").arg(i);
+        } else {
+            down_frames.append(img.scaled(300, 300, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
     }
 }
@@ -80,17 +90,52 @@ void LionAnimation::startRightLoop() {
 }
 
 // 启动跳跃循环动画
-void LionAnimation::startJumpLoop() {
-    if (jump_frames.isEmpty()) {
+void LionAnimation::startUpLoop() {
+    if (up_frames.isEmpty()) {
         qDebug() << "没有跳跃帧，无法播放动画";
         return;
     }
-    currentType = Jump;
-    currentFrame = 0;
-    frameTimer->start();
+    currentType = Up;
+    if(isRight){
+        currentFrame = 1;
+    }
+    else{
+        currentFrame = 0;
+    }
+    //frameTimer->start();
     update();
 }
 
+void LionAnimation::startDownLoop() {
+    if (down_frames.isEmpty()) {
+        qDebug() << "没有向下帧，无法播放动画";
+        return;
+    }
+    currentType = Down;
+    if(isRight){
+        currentFrame = 1;
+    }
+    else{
+        currentFrame = 0;
+    }
+    //frameTimer->start();
+    update();
+}
+
+void LionAnimation::stop_start() {
+    if (down_frames.isEmpty()) {
+        qDebug() << "没有向下帧，无法播放动画";
+        return;
+    }
+    if(isRight){
+        currentType = Right;
+    }
+    else{
+        currentType = Left;
+    }
+    currentFrame = 0;
+    update();
+}
 // 定时器触发：切换到下一帧
 void LionAnimation::onFrameTimerTimeout() {
     switch (currentType) {
@@ -100,8 +145,11 @@ void LionAnimation::onFrameTimerTimeout() {
     case Right:
         currentFrame = (currentFrame + 1) % right_frames.size();
         break;
-    case Jump:
-        currentFrame = (currentFrame + 1) % jump_frames.size();
+    case Up:
+        currentFrame = (currentFrame + 1) % up_frames.size();
+        break;
+    case Down:
+        currentFrame = (currentFrame + 1) % down_frames.size();
         break;
     default:
         return;
@@ -127,9 +175,14 @@ void LionAnimation::paintEvent(QPaintEvent *event) {
             currentImg = right_frames[currentFrame];
         }
         break;
-    case Jump:
-        if (currentFrame < jump_frames.size()) {
-            currentImg = jump_frames[currentFrame];
+    case Up:
+        if (currentFrame < up_frames.size()) {
+            currentImg = up_frames[currentFrame];
+        }
+        break;
+    case Down:
+        if(currentFrame < down_frames.size()){
+            currentImg = down_frames[currentFrame];
         }
         break;
     default:

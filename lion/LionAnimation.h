@@ -21,20 +21,25 @@ public slots:
     // 启动各动画循环
     void startLeftLoop();    // 向左移动循环
     void startRightLoop();   // 向右移动循环
-    void startJumpLoop();    // 跳跃循环
+    void startUpLoop();    // 向上循环
+    void startDownLoop();    // 向下循环
+    void stop_start();
     // 帧切换定时器槽函数
     void onFrameTimerTimeout();
 public:
     QVector<QPixmap> left_frames;   // 向左帧序列
     QVector<QPixmap> right_frames;  // 向右帧序列
-    QVector<QPixmap> jump_frames;   // 跳跃帧序列
+    QVector<QPixmap> up_frames;   // 跳跃帧序列
+    QVector<QPixmap> down_frames;  //向下帧序列
+    bool isRight;
 
     QTimer* frameTimer;  // 控制帧切换的定时器
     int currentFrame;    // 当前显示的帧索引
     enum AnimationType {  // 动画类型枚举
         Left,
         Right,
-        Jump,
+        Up,
+        Down,
         None
     } currentType;  // 当前播放的动画类型
 public:
@@ -43,7 +48,8 @@ public:
         switch (currentType) {
         case Left: return left_frames[currentFrame];
         case Right: return right_frames[currentFrame];
-        case Jump: return jump_frames[currentFrame];
+        case Up: return up_frames[currentFrame];
+        case Down: return down_frames[currentFrame];
         default: return QPixmap();  // 默认返回空图
         }
     }
