@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\menu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\LevelSelect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\SettingsPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\GameScene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\LionAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\palyer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\EWIEGA46WW\qrc_Pic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\LevelSelect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\GameSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\SettingsPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\GameScene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\LionAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\include_Debug\ui_menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\include_Release\ui_menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\include_MinSizeRel\ui_menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\include_RelWithDebInfo\ui_menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\code\QT\game-lion_animation3\build\CMakeFiles\e3626e39e85246ff9053e27a0da23bcd\autouic_(CONFIG).stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\code\QT\game-lion_animation3\build\CMakeFiles\d02f4bbef4adf84d7aee3920db114484\qrc_Pic.cpp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\Pic.qrc" />
+    <None Include="D:\code\QT\game-lion_animation3\game-lion_animation3\lion\menu.ui" />
+    <None Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\autouic_Debug.stamp" />
+    <None Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\autouic_Release.stamp" />
+    <None Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\autouic_MinSizeRel.stamp" />
+    <None Include="D:\code\QT\game-lion_animation3\build\LionJump_autogen\autouic_RelWithDebInfo.stamp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4FDC66E7-61EC-35E7-A497-AFA618ACE53D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{82416E2A-51A7-38A7-8E98-631BFBCD365D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{5B139DE4-EE9C-35EB-A740-D0A1F59C0EB6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
