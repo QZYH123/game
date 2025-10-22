@@ -16,6 +16,7 @@
 // 前向声明
 class LevelSelect;
 class SettingsPage;
+class LevelEditor;
 
 namespace Ui {
 class menu;
@@ -49,14 +50,19 @@ public:
      */
     void ui_load();
 
-    QPushButton** buttons;        ///< 菜单按钮数组，顺序为 Start/Continue/Settings/Exit
+    QPushButton** buttons;        ///< 菜单按钮数组，顺序为 Start/Continue/LevelEditor/Settings/Exit
 
 private slots:
     /**
-     * @brief 处理Start按钮点击事件
+     * @brief 处理开始游戏按钮点击事件
      */
     void onStartButtonClicked();
-
+    
+    /**
+     * @brief 处理继续游戏按钮点击事件
+     */
+    void onContinueButtonClicked();
+    
     /**
      * @brief 处理从选关界面返回的事件
      */
@@ -76,11 +82,27 @@ private slots:
      * @brief 处理关卡选择事件
      */
     void onLevelSelected(int levelIndex);
+    
+    /**
+     * @brief 处理关卡编辑器按钮点击事件
+     */
+    void onLevelEditorButtonClicked();
+    
+    /**
+     * @brief 处理从关卡编辑器返回的事件
+     */
+    void onBackFromLevelEditor();
+    
+    /**
+     * @brief 处理自定义关卡按钮点击事件
+     */
+    void onCustomLevelButtonClicked();
 
 private:
     Ui::menu *ui;                 ///< Qt Designer 生成的 UI 指针
     LevelSelect* level_select;    ///< 选关界面指针
     SettingsPage* settings_page;  ///< 设置页面指针
+    LevelEditor* level_editor;    ///< 关卡编辑器指针
     GameScene* gameScene;
 };
 

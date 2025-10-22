@@ -1,0 +1,11 @@
+<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg">
+  <!-- 机关底座 -->
+  <rect x="5" y="15" width="30" height="10" fill="#8B4513" stroke="#654321" stroke-width="1"/>
+  
+  <!-- 箭头 -->
+  <polygon points="15,20 5,16 5,24" fill="#FF4500" stroke="#CC3300" stroke-width="1"/>
+  
+  <!-- 机关装饰 -->
+  <circle cx="25" cy="20" r="3" fill="#696969" stroke="#2F4F4F" stroke-width="1"/>
+  <rect x="28" y="18" width="4" height="4" fill="#A0522D"/>
+</svg>
