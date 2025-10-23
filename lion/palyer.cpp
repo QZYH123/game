@@ -9,8 +9,14 @@ player::player(QWidget *parent) : animation(new LionAnimation(parent))
     isJump = 0;
     v0 = 0,t = 0;
     isRight = true;
+    // 初始化按键与动画状态
+    isLeftPress = false;
+    isRightPress = false;
+    lastAnimType = LionAnimation::None;
     animation->loadAnimationFrames();
     moveSpeed = MOVE_SPEED;
+    // 初始显示面向右的静态首帧
+    animation->startIdleRight();
 }
 bool player::is_ground()
 {
@@ -51,7 +57,9 @@ void player::left()
 }
 void player::jump()
 {
-    v0 = -sqrt(2 * G * HEIGHT);
+    // 将目标跳跃高度按上一版的视觉效果回归为约两倍 HEIGHT
+    double targetHeight = HEIGHT * 2.0;
+    v0 = -sqrt(2 * G * targetHeight);
     isJump = 1;
     animation->startJumpLoop();
     fall();
@@ -61,26 +69,32 @@ void player::fall()
 {
     // 使用基于实际帧率的时间步长
     t = GAME_TICK / 1000.0; // 将毫秒转换为秒
-    h1=v0*t+G*pow(t,2)/2;
-    y+=(int)(h1+0.5);
+    h1 = v0 * t + G * t * t / 2; // 本帧位移（像素）
 
-    if(v0>0){
-        if(is_ground()){
-            y=y/B0*B0;
-            v0=0;
-            isJump=0;
+    // 先按位移更新一次，再根据碰撞进行对齐修正
+    int dy = (int)(h1 + 0.5);
+    y += dy;
+
+    if (v0 > 0) {
+        // 下落：检测脚下碰撞并吸附到砖块顶面
+        if (is_ground()) {
+            int tileRow = (y + H) / B0; // 脚所在的砖块行
+            y = tileRow * B0 - H;       // 顶对齐：砖块顶面减去角色高度
+            v0 = 0;
+            isJump = 0;
         }
-    }
-    else {
-        if(head_touch()){
+    } else {
+        // 上升：检测头顶碰撞并压回到砖块下侧
+        if (head_touch()) {
+            int tileRow = y / B0;       // 头部所在的砖块行
+            y = (tileRow + 1) * B0;     // 底对齐：砖块底面
             v0 = 0;
             h1 = 0;
-            y = y / h * h + h;
         }
-        y+=(int)(h1+0.5);
     }
 
-    v0=v0+G*t;
+    // 更新速度（重力）
+    v0 = v0 + G * t;
 }
 void player::update()
 {
@@ -131,7 +145,9 @@ void player::updateAnimationState()
             animation->startJumpLoop();
             break;
         default:
-            animation->frameTimer->stop(); // 静止时停止动画
+            // 静止：根据面向方向显示首帧
+            if (isRight) animation->startIdleRight();
+            else animation->startIdleLeft();
             break;
         }
         lastAnimType = newType;
