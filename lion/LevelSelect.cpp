@@ -1,7 +1,16 @@
 #include "LevelSelect.h"
+#include "Config.h"
 #include <QLabel>
 #include <QPixmap>
 #include <QPalette>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <QFile>
+#include <QDir>
+#include <QApplication>
+#include <QDebug>
 
 LevelSelect::LevelSelect(QWidget *parent)
     : QMainWindow(parent)
@@ -13,6 +22,7 @@ LevelSelect::LevelSelect(QWidget *parent)
         level_unlocked[i] = (i == 0);
     }
     ui_load();
+    loadGameProgress();
 }
 
 void LevelSelect::ui_load()
@@ -125,5 +135,66 @@ LevelSelect::~LevelSelect()
             delete level_buttons[i];
         }
         delete[] level_buttons;
+    }
+}
+
+void LevelSelect::loadGameProgress()
+{
+    QString saveDir = getDataDirectory();
+    QString saveFilePath = saveDir + "/game_progress.json";
+    
+    QFile saveFile(saveFilePath);
+    if (!saveFile.exists()) {
+        // 如果文件不存在，只有第1关解锁
+        qDebug() << "游戏进度文件不存在，只有第1关解锁";
+        
+        // 重置所有关卡为锁定状态
+        for (int i = 0; i < MAX_LEVELS; ++i) {
+            level_unlocked[i] = false;
+        }
+        
+        // 第1关默认解锁
+        level_unlocked[0] = true;
+        
+        // 更新所有按钮的样式
+        for (int i = 0; i < MAX_LEVELS; ++i) {
+            updateLevelButtonStyle(i);
+        }
+        
+        return;
+    }
+    
+    if (saveFile.open(QIODevice::ReadOnly)) {
+        QByteArray saveData = saveFile.readAll();
+        saveFile.close();
+        
+        QJsonDocument loadDoc = QJsonDocument::fromJson(saveData);
+        QJsonObject progress = loadDoc.object();
+        
+        // 获取已解锁的关卡列表
+        QJsonArray unlockedLevels = progress["unlockedLevels"].toArray();
+        
+        // 重置所有关卡为锁定状态
+        for (int i = 0; i < MAX_LEVELS; ++i) {
+            level_unlocked[i] = false;
+        }
+        
+        // 根据进度数据解锁关卡
+        for (const QJsonValue& value : unlockedLevels) {
+            int levelIndex = value.toInt() - 1;  // 转换为0基索引
+            if (levelIndex >= 0 && levelIndex < MAX_LEVELS) {
+                level_unlocked[levelIndex] = true;
+                qDebug() << "关卡" << (levelIndex + 1) << "已解锁";
+            }
+        }
+        
+        // 更新所有按钮的样式
+        for (int i = 0; i < MAX_LEVELS; ++i) {
+            updateLevelButtonStyle(i);
+        }
+        
+        qDebug() << "游戏进度加载完成";
+    } else {
+        qDebug() << "无法读取游戏进度文件：" << saveFilePath;
     }
 }

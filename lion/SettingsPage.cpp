@@ -10,7 +10,7 @@
 #include <QGroupBox>
 #include <QMessageBox>
 #include <QScrollArea>
-
+#include "AudioController.h"
 /**
  * @brief 构造设置页面窗口并初始化界面
  * @param parent 父窗口指针
@@ -301,7 +301,18 @@ void SettingsPage::ui_load() {
     connect(saveButton, SIGNAL(clicked()), this, SLOT(onSaveButtonClicked()));
     connect(musicVolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(onMusicVolumeChanged(int)));
     connect(soundVolumeSlider, SIGNAL(valueChanged(int)), this, SLOT(onSoundVolumeChanged(int)));
-    
+    connect(musicEnabledCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+        GameSettings& settings = GameSettings::getInstance();
+        settings.musicEnabled = checked;
+        if (checked) {
+            AudioController::getInstance().playBackgroundMusic();
+        } else {
+            AudioController::getInstance().stopBackgroundMusic();
+        }
+    });
+    connect(soundEnabledCheckBox, &QCheckBox::toggled, this, [this](bool checked) {
+        GameSettings::getInstance().soundEnabled = checked;
+    });
     // 设置中央部件
     this->setCentralWidget(centralWidget);
 }
@@ -354,6 +365,7 @@ void SettingsPage::updateUIFromSettings() {
  * @brief 处理返回按钮点击事件
  */
 void SettingsPage::onBackButtonClicked() {
+    AudioController::getInstance().playSound(SoundType::Click);
     emit backToMenu();
 }
 
@@ -361,6 +373,7 @@ void SettingsPage::onBackButtonClicked() {
  * @brief 处理保存按钮点击事件
  */
 void SettingsPage::onSaveButtonClicked() {
+    AudioController::getInstance().playSound(SoundType::Click);
     updateSettingsFromUI();
     if (GameSettings::getInstance().saveToFile()) {
         QMessageBox::information(this, "保存成功", "设置已成功保存！");
@@ -375,6 +388,7 @@ void SettingsPage::onSaveButtonClicked() {
  */
 void SettingsPage::onMusicVolumeChanged(int value) {
     musicVolumeLabel->setText(QString::number(value) + "%");
+    AudioController::getInstance().setBgmVolume(value);
 }
 
 /**
@@ -383,6 +397,7 @@ void SettingsPage::onMusicVolumeChanged(int value) {
  */
 void SettingsPage::onSoundVolumeChanged(int value) {
     soundVolumeLabel->setText(QString::number(value) + "%");
+    AudioController::getInstance().setSoundVolume(value);
 }
 
 /**
@@ -397,5 +412,6 @@ GameSettings& SettingsPage::getSettings() const {
  * @brief 析构并释放UI资源
  */
 SettingsPage::~SettingsPage() {
-    // Qt会自动释放子控件
+    disconnect(&AudioController::getInstance(), nullptr, this, nullptr);
+    disconnect(this, nullptr, &AudioController::getInstance(), nullptr);
 }

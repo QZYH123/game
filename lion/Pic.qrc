@@ -7,6 +7,7 @@
         <file>Picture/setting_page.png</file>
         <file>Picture/gamebkg.jpg</file>
     </qresource>
+
     <qresource prefix="/ui">
         <file>Picture/button.jpg</file>
         <file>Picture/button_y.png</file>
@@ -14,25 +15,30 @@
         <file>Picture/backbtn.png</file>
     </qresource>
     <qresource prefix="/lion">
-              <!-- 向左移动帧 -->
-              <file>Picture/left_1.jpg</file>
-              <file>Picture/left_2.jpg</file>
-              <file>Picture/left_3.jpg</file>
-              <file>Picture/left_4.jpg</file>
+        <file>Picture/left_1.jpg</file>
+        <file>Picture/left_2.jpg</file>
+        <file>Picture/left_3.jpg</file>
+        <file>Picture/left_4.jpg</file>
+        <file>Picture/right_1.jpg</file>
+        <file>Picture/right_2.jpg</file>
+        <file>Picture/right_3.jpg</file>
+        <file>Picture/right_4.jpg</file>
+        <file>Picture/jump_1.jpg</file>
+        <file>Picture/jump_2.jpg</file>
+        <file>Picture/jump_3.jpg</file>
+        <file>Picture/jump_4.jpg</file>
+    </qresource>
+    <qresource prefix="/">
+    <file>res/stone11.png</file>
+    <file>sounds/Click.mp3</file>
+    <file>sounds/Float.mp3</file>
+    <file>sounds/Jump.mp3</file>
+    <file>sounds/Pick.mp3</file>
+    <file>sounds/Win.mp3</file>
+    <file>sounds/bgm1.mp3</file>
+    <file>sounds/bgm2.mp3</file>
+    <file>sounds/bgm3.mp3</file>
 
-              <!-- 向右移动帧 -->
-              <file>Picture/right_1.jpg</file>
-              <file>Picture/right_2.jpg</file>
-              <file>Picture/right_3.jpg</file>
-              <file>Picture/right_4.jpg</file>
 
-              <!-- 跳跃帧 -->
-              <file>Picture/jump_1.jpg</file>
-              <file>Picture/jump_2.jpg</file>
-              <file>Picture/jump_3.jpg</file>
-              <file>Picture/jump_4.jpg</file>
-          </qresource>
-          <qresource prefix="/">              
-              <file>res/stone11.png</file>
-          </qresource>
+    </qresource>
 </RCC>

@@ -15,6 +15,7 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QDebug>
+#include "Config.h"
 
 /**
  * @class GameSettings
@@ -54,7 +55,7 @@ public:
      * @return 是否保存成功
      */
     bool saveToFile() const {
-        QString filePath = QCoreApplication::applicationDirPath() + "/settings.cfg";
+        QString filePath = getDataDirectory() + "/settings.cfg";
         QFile file(filePath);
         
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -84,7 +85,7 @@ public:
      * @return 是否加载成功
      */
     bool loadFromFile() {
-        QString filePath = QCoreApplication::applicationDirPath() + "/settings.cfg";
+        QString filePath = getDataDirectory() + "/settings.cfg";
         QFile file(filePath);
         
         if (!file.exists()) {

@@ -43,6 +43,17 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         player.h
         palyer.cpp
         Config.h
+        
+        # 新增：关卡系统文件
+        LevelData.h
+        LevelData.cpp
+        LevelManager.h
+        LevelManager.cpp
+        
+        # 新增：关卡编辑器文件
+        LevelEditor.h
+        LevelEditor.cpp
+        AudioController.h AudioController.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

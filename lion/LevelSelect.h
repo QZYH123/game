@@ -5,6 +5,8 @@
 #include <QPushButton>
 #include <QLabel>
 
+class GameScene;
+
 class LevelSelect : public QMainWindow
 {
     Q_OBJECT
@@ -15,6 +17,7 @@ public:
     void ui_load();
     void setLevelUnlocked(int levelIndex, bool unlocked);
     bool isLevelUnlocked(int levelIndex) const;
+    void loadGameProgress();
 
 signals:
     void backToMenu();

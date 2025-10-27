@@ -1,14 +1,17 @@
 #include "player.h"
 #include "Config.h"
+#include "AudioController.h"
 
-extern int map[24][24];
+extern int map[GRID_WIDTH][GRID_HEIGHT];
 player::player(QWidget *parent) : animation(new LionAnimation(parent))
 {
     x = X, y = Y, h = H, w = W;//初始化角色位置和大小
+    vx = 0, vy = 0; // 初始化速度
     isJump = 0;
     v0 = 0,t = 0;
     isRight = true;
     animation->loadAnimationFrames();
+    moveSpeed = MOVE_SPEED;
 }
 bool player::is_ground()
 {
@@ -35,14 +38,15 @@ bool player::head_touch(){
 void player::right()
 {
     if(!right_touch())
-        x = (x + MOVE_SPEED < XSIZE - w) ? x + MOVE_SPEED : XSIZE - w;
+        x = (x + moveSpeed < XSIZE - w) ? x + moveSpeed : XSIZE - w;
     isRight = true;
+   // qDebug()<<moveSpeed;
     animation->startRightLoop();
 }
 void player::left()
 {
     if(!left_touch())
-        x = (x - MOVE_SPEED > 0) ? x - MOVE_SPEED : 0;
+        x = (x - moveSpeed > 0) ? x - moveSpeed : 0;
     isRight = false;
     animation->startLeftLoop();
 }
@@ -52,11 +56,13 @@ void player::jump()
     isJump = 1;
     animation->startJumpLoop();
     fall();
+    AudioController::getInstance().playSound(SoundType::Jump);
 }
 
 void player::fall()
 {
-    t = sqrt(2 * HEIGHT / G) / 14;
+    // 使用基于实际帧率的时间步长
+    t = GAME_TICK / 1000.0; // 将毫秒转换为秒
     h1=v0*t+G*pow(t,2)/2;
     y+=(int)(h1+0.5);
 
@@ -90,12 +96,14 @@ void player::update()
 
     // 2. 处理移动逻辑（基于按键状态）
     if (isLeftPress && !left_touch()) {
-        x = (x - MOVE_SPEED > 0) ? x - MOVE_SPEED : 0;
+        x = (x - moveSpeed > 0) ? x - moveSpeed : 0;
         isRight = false;
+        qDebug() << "角色左移，当前移动速度：" << moveSpeed;
     }
     if (isRightPress && !right_touch()) {
-        x = (x + MOVE_SPEED < XSIZE - w) ? x + MOVE_SPEED : XSIZE - w;
+        x = (x + moveSpeed < XSIZE - w) ? x + moveSpeed : XSIZE - w;
         isRight = true;
+        qDebug() << "角色右移，当前移动速度：" << moveSpeed;
     }
 
     // 3. 处理动画状态更新
@@ -134,4 +142,23 @@ void player::updateAnimationState()
 QPixmap player::getCurrentAnimationFrame()
 {
     return animation->getCurrentFrame();
+}
+
+void player::setMoveSpeedScale(double scale)
+{
+    if (scale < 0.2) scale = 0.2;
+    if (scale > 2.0) scale = 2.0;
+    moveSpeed = qMax(1, (int)(MOVE_SPEED * scale));
+}
+
+void player::resetMoveSpeed()
+{
+    moveSpeed = MOVE_SPEED;
+}
+
+void player::resetKeyStates()
+{
+    isLeftPress = false;
+    isRightPress = false;
+    qDebug() << "玩家按键状态已重置";
 }
