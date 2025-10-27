@@ -548,10 +548,12 @@ void GameScene::collectItem(const GameElement& element)
     // 更新关卡目标进度
     switch (element.element_type) {
     case GameElementType::Vegetable:
+        AudioController::getInstance().playSound(SoundType::Collect);
         current_level_data->updateObjectiveProgress("collect_vegetables", 1);
         qDebug() << "收集到青菜！";
         break;
     case GameElementType::LevelExit:
+        AudioController::getInstance().playSound(SoundType::Win);
         current_level_data->updateObjectiveProgress("reach_exit", 1);
         qDebug() << "到达终点！";
         break;

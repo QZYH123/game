@@ -57,6 +57,7 @@ void player::left()
 }
 void player::jump()
 {
+    AudioController::getInstance().playSound(SoundType::Jump);
     // 将目标跳跃高度按上一版的视觉效果回归为约两倍 HEIGHT
     double targetHeight = HEIGHT * 2.0;
     v0 = -sqrt(2 * G * targetHeight);
@@ -128,6 +129,8 @@ void player::updateAnimationState()
     // 优先级：跳跃动画 > 移动动画 > 静止
     if (isJump) {
         newType = LionAnimation::Jump;
+        // 跳跃期间允许空中转向：仅更新朝向，不改变动画类型
+        animation->setFacingRight(isRight);
     } else if (isLeftPress) {
         newType = LionAnimation::Left;
     } else if (isRightPress) {

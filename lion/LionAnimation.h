@@ -49,6 +49,9 @@ public:
 
     // 当前朝向（true=右，false=左），用于跳跃镜像
     bool facingRight = true;
+
+    // 新增：在不改变动画类型的情况下更新朝向（用于空中转向）
+    void setFacingRight(bool right) { facingRight = right; }
 public:
     // 公共接口：获取当前帧
     QPixmap getCurrentFrame() const {

@@ -4,6 +4,7 @@
 #include <QSoundEffect>
 #include "LionAnimation.h"
 #include "qdebug.h"
+#include "AudioController.h"
 class player
 {
 public:

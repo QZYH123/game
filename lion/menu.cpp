@@ -51,6 +51,7 @@ menu::menu(QWidget *parent)
  * @brief 加载主菜单界面元素并设置样式与布局
  */
 void menu::ui_load(){
+    AudioController::getInstance().playBackgroundMusic();
     const int btnHeight = 80;
     const int btnWidth = 180;
     const int intervalY = 110;
@@ -129,6 +130,7 @@ void menu::ui_load(){
 }
 void menu::onStartButtonClicked()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 隐藏主菜单，显示选关界面
     this->hide();
     level_select->loadGameProgress();  // 重新加载游戏进度
@@ -137,6 +139,7 @@ void menu::onStartButtonClicked()
 
 void menu::onContinueButtonClicked()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 检查是否有保存的游戏进度
     QString saveDir = getDataDirectory();
     QString saveFilePath = saveDir + "/game_progress.json";
@@ -192,6 +195,7 @@ void menu::onContinueButtonClicked()
 
 void menu::onBackFromLevelSelect()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 隐藏选关界面，显示主菜单
     level_select->hide();
     this->show();
@@ -199,6 +203,7 @@ void menu::onBackFromLevelSelect()
 
 void menu::onSettingsButtonClicked()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 隐藏主菜单，显示设置页面
     this->hide();
     settings_page->show();
@@ -206,6 +211,7 @@ void menu::onSettingsButtonClicked()
 
 void menu::onBackFromSettings()
 {
+    // AudioController::getInstance().playSound(SoundType::Click);
     // 隐藏设置页面，显示主菜单
     settings_page->hide();
     this->show();
@@ -213,6 +219,7 @@ void menu::onBackFromSettings()
 // 实现关卡选择处理函数
 void menu::onLevelSelected(int levelIndex)
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     qDebug() << "收到关卡索引：" << levelIndex; // 检查是否打印
     // 隐藏选关界面
     level_select->hide();
@@ -254,6 +261,7 @@ void menu::onLevelSelected(int levelIndex)
  */
 void menu::onLevelEditorButtonClicked()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 创建关卡编辑器（如果还没有创建）
     if (!level_editor) {
         level_editor = new LevelEditor(nullptr);
@@ -269,6 +277,7 @@ void menu::onLevelEditorButtonClicked()
 
 void menu::onBackFromLevelEditor()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 隐藏关卡编辑器，显示主菜单
     if (level_editor) {
         level_editor->hide();
@@ -278,6 +287,7 @@ void menu::onBackFromLevelEditor()
 
 void menu::onCustomLevelButtonClicked()
 {
+    AudioController::getInstance().playSound(SoundType::Click);
     // 创建文件选择对话框
     QString filePath = QFileDialog::getOpenFileName(
         this,
