@@ -15,6 +15,7 @@ LevelEditorCanvas::LevelEditorCanvas(QWidget* parent)
     , level_data(nullptr)
     , current_element_type(GameElementType::SolidBlock)
     , current_arrow_direction(ArrowDirection::Right)
+    , current_platform_distance(3)
     , show_grid(true)
     , is_dragging(false)
     , grid_size(B0)
@@ -73,6 +74,11 @@ void LevelEditorCanvas::setCurrentArrowDirection(ArrowDirection direction)
     current_arrow_direction = direction;
 }
 
+void LevelEditorCanvas::setCurrentPlatformDistance(int distance)
+{
+    current_platform_distance = distance;
+}
+
 QPoint LevelEditorCanvas::screenToGrid(const QPoint& screenPos) const
 {
     return QPoint(screenPos.x() / grid_size, screenPos.y() / grid_size);
@@ -98,11 +104,14 @@ void LevelEditorCanvas::placeElement(const QPoint& gridPos)
         return;
     }
     
-    // 设置网格数据
-    level_data->setElementAt(gridPos.x(), gridPos.y(), current_element_type);
+    // 先清除该位置的现有元素，避免重复添加
+    level_data->removeElementsAt(gridPos.x(), gridPos.y());
     
-    // 如果是特殊元素，添加到游戏元素列表
-    if (current_element_type != GameElementType::SolidBlock) {
+    // 如果是实心方块，只需要设置网格数据
+    if (current_element_type == GameElementType::SolidBlock) {
+        level_data->setElementAt(gridPos.x(), gridPos.y(), current_element_type);
+    } else {
+        // 对于特殊元素，创建游戏元素并添加（addGameElement会自动设置网格数据）
         GameElement element;
         element.element_type = current_element_type;
         element.position = QPointF(gridPos.x() * grid_size, gridPos.y() * grid_size);
@@ -111,10 +120,10 @@ void LevelEditorCanvas::placeElement(const QPoint& gridPos)
         // 设置纹理路径或属性
         switch (current_element_type) {
         case GameElementType::Vegetable:
-            element.texture_path = ":/vegetables/cabbage.png";
+            element.texture_path = ":/images/vegetable.png";
             break;
         case GameElementType::LevelExit:
-            element.texture_path = ":/ui/exit_flag.png";
+            element.texture_path = ":/images/door.png";
             break;
         case GameElementType::PlayerStart:
             level_data->setPlayerStartPosition(element.position);
@@ -136,6 +145,11 @@ void LevelEditorCanvas::placeElement(const QPoint& gridPos)
                 break;
             }
             element.properties["rate"] = 60; // 默认发射间隔tick
+            break;
+        case GameElementType::HorizontalPlatform:
+        case GameElementType::VerticalPlatform:
+            // 设置移动距离属性
+            element.properties["move_distance"] = current_platform_distance;
             break;
         case GameElementType::Water:
         case GameElementType::Lava:
@@ -297,6 +311,14 @@ QColor LevelEditorCanvas::getElementColor(GameElementType elementType) const
         return QColor(64, 164, 223); // 水蓝
     case GameElementType::Lava:
         return QColor(255, 85, 0); // 岩浆橙红
+    case GameElementType::HorizontalPlatform:
+        return QColor(255, 165, 0); // 橙色
+    case GameElementType::VerticalPlatform:
+        return QColor(255, 192, 203); // 粉色
+    case GameElementType::Switch:
+        return QColor(255, 255, 255); // 白色
+    case GameElementType::Door:
+        return QColor(139, 69, 19); // 深棕色
     default:
         return QColor(128, 128, 128);
     }
@@ -463,11 +485,15 @@ void LevelEditor::createToolPanel()
     element_combo->addItem("关卡出口", static_cast<int>(GameElementType::LevelExit));
     element_combo->addItem("玩家起点", static_cast<int>(GameElementType::PlayerStart));
     element_combo->addItem("尖刺", static_cast<int>(GameElementType::Spike));
-    element_combo->addItem("移动平台", static_cast<int>(GameElementType::MovingPlatform));
+    element_combo->addItem("移动平台(旧)", static_cast<int>(GameElementType::MovingPlatform));
     element_combo->addItem("检查点", static_cast<int>(GameElementType::Checkpoint));
     element_combo->addItem("箭机关", static_cast<int>(GameElementType::ArrowTrap));
     element_combo->addItem("水(减速)", static_cast<int>(GameElementType::Water));
     element_combo->addItem("岩浆(死亡)", static_cast<int>(GameElementType::Lava));
+    element_combo->addItem("水平移动平台", static_cast<int>(GameElementType::HorizontalPlatform));
+    element_combo->addItem("垂直移动平台", static_cast<int>(GameElementType::VerticalPlatform));
+    element_combo->addItem("开关", static_cast<int>(GameElementType::Switch));
+    element_combo->addItem("门", static_cast<int>(GameElementType::Door));
     element_combo->setCurrentIndex(1); // 默认选择实心方块
     
     elementLayout->addWidget(new QLabel("选择元素类型："));
@@ -488,6 +514,21 @@ void LevelEditor::createToolPanel()
     // 初始时隐藏方向选择（只有选择箭机关时才显示）
     arrow_direction_label->setVisible(false);
     arrow_direction_combo->setVisible(false);
+    
+    // 移动平台距离设置
+    platform_distance_label = new QLabel("移动距离：");
+    platform_distance_spinbox = new QSpinBox();
+    platform_distance_spinbox->setRange(-10, 10); // 设置范围为-10到10个格子
+    platform_distance_spinbox->setValue(3); // 默认值为3
+    platform_distance_spinbox->setSuffix(" 格");
+    platform_distance_spinbox->setToolTip("正数：向上/右移动，负数：向下/左移动");
+    
+    elementLayout->addWidget(platform_distance_label);
+    elementLayout->addWidget(platform_distance_spinbox);
+    
+    // 初始时隐藏移动平台距离设置（只有选择移动平台时才显示）
+    platform_distance_label->setVisible(false);
+    platform_distance_spinbox->setVisible(false);
     
     clear_button = new QPushButton("清空关卡");
     elementLayout->addWidget(clear_button);
@@ -549,6 +590,8 @@ void LevelEditor::connectSignals()
             this, &LevelEditor::onElementTypeChanged);
     connect(arrow_direction_combo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &LevelEditor::onArrowDirectionChanged);
+    connect(platform_distance_spinbox, QOverload<int>::of(&QSpinBox::valueChanged),
+            this, &LevelEditor::onPlatformDistanceChanged);
     connect(clear_button, &QPushButton::clicked, this, &LevelEditor::clearLevel);
     connect(test_button, &QPushButton::clicked, this, &LevelEditor::testCurrentLevel);
     connect(back_to_menu_button, &QPushButton::clicked, this, &LevelEditor::returnToMenu);
@@ -725,6 +768,12 @@ void LevelEditor::onElementTypeChanged(int index)
     bool isArrowTrap = (elementType == GameElementType::ArrowTrap);
     arrow_direction_label->setVisible(isArrowTrap);
     arrow_direction_combo->setVisible(isArrowTrap);
+    
+    // 只有选择移动平台时才显示距离设置
+    bool isMovingPlatform = (elementType == GameElementType::HorizontalPlatform || 
+                            elementType == GameElementType::VerticalPlatform);
+    platform_distance_label->setVisible(isMovingPlatform);
+    platform_distance_spinbox->setVisible(isMovingPlatform);
 }
 
 void LevelEditor::onArrowDirectionChanged(int index)
@@ -775,4 +824,9 @@ void LevelEditor::toggleGrid(bool show)
 void LevelEditor::onCanvasDataChanged()
 {
     setModified(true);
+}
+
+void LevelEditor::onPlatformDistanceChanged(int distance)
+{
+    canvas->setCurrentPlatformDistance(distance);
 }

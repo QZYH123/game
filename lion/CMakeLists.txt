@@ -55,6 +55,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         LevelEditor.cpp
         AudioController.h
         AudioController.cpp
+        
+        # 新增：启动画面和帮助页面
+        SplashScreen.h
+        SplashScreen.cpp
+        HelpPage.h
+        HelpPage.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

@@ -4,98 +4,12 @@
         {
             "height": 32,
             "properties": {
-            },
-            "texture": ":/images/vegetable.png",
-            "type": 2,
-            "width": 32,
-            "x": 512,
-            "y": 640
-        },
-        {
-            "height": 32,
-            "properties": {
-            },
-            "texture": ":/images/door.png",
-            "type": 7,
-            "width": 32,
-            "x": 640,
-            "y": 640
-        },
-        {
-            "height": 32,
-            "properties": {
                 "move_distance": 3
             },
             "texture": "",
-            "type": 11,
+            "type": 12,
             "width": 32,
-            "x": 416,
-            "y": 576
-        },
-        {
-            "height": 32,
-            "properties": {
-                "move_distance": 3
-            },
-            "texture": "",
-            "type": 11,
-            "width": 32,
-            "x": 384,
-            "y": 608
-        },
-        {
-            "height": 32,
-            "properties": {
-                "move_distance": 3
-            },
-            "texture": "",
-            "type": 11,
-            "width": 32,
-            "x": 448,
-            "y": 544
-        },
-        {
-            "height": 32,
-            "properties": {
-                "move_distance": 3
-            },
-            "texture": "",
-            "type": 11,
-            "width": 32,
-            "x": 192,
-            "y": 608
-        },
-        {
-            "height": 32,
-            "properties": {
-                "move_distance": 3
-            },
-            "texture": "",
-            "type": 11,
-            "width": 32,
-            "x": 128,
-            "y": 608
-        },
-        {
-            "height": 32,
-            "properties": {
-                "move_distance": 3
-            },
-            "texture": "",
-            "type": 11,
-            "width": 32,
-            "x": 160,
-            "y": 608
-        },
-        {
-            "height": 32,
-            "properties": {
-                "move_distance": 3
-            },
-            "texture": "",
-            "type": 11,
-            "width": 32,
-            "x": 224,
+            "x": 480,
             "y": 608
         }
     ],
@@ -944,11 +858,11 @@
             0,
             0,
             0,
-            0,
-            0,
-            0,
-            0,
-            0,
+            1,
+            1,
+            1,
+            1,
+            1,
             0,
             0,
             0,
@@ -987,6 +901,9 @@
             1,
             1,
             1,
+            0,
+            0,
+            0,
             1,
             1,
             1,
@@ -1012,28 +929,19 @@
             1,
             1,
             1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
         ]
     ],
     "height": 22,
     "name": "New Level",
     "objectives": [
-        {
-            "currentCount": 0,
-            "description": "收集所有青菜 (0/1)",
-            "targetCount": 1,
-            "type": "collect_vegetables"
-        }
     ],
     "playerStart": {
         "x": 400,

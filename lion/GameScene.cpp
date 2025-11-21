@@ -40,6 +40,13 @@ GameScene::GameScene(QWidget* parent): QWidget(parent){
     // === 新增：初始化关卡系统 ===
     current_level_data = nullptr;
     
+    // === 初始化暂停功能 ===
+    is_paused = false;
+    pause_menu = nullptr;
+    resume_button = nullptr;
+    restart_button = nullptr;
+    main_menu_button = nullptr;
+    
     // 初始化UI标签
     objective_label = new QLabel(this);
     objective_label->setGeometry(10, 10, 300, 30);
@@ -76,38 +83,90 @@ GameScene::GameScene(QWidget* parent): QWidget(parent){
         emit backToMainMenu();
     });
     
-    // 加载纹理资源
-    vegetable_texture.load(":/vegetables/cabbage.png");
+    // 加载纹理资源（使用Qt资源路径，避免工作目录影响）
+    vegetable_texture.load(":/images/vegetable.png");
     if (vegetable_texture.isNull()) {
         // 如果没有青菜图片，创建一个简单的绿色方块
         vegetable_texture = QPixmap(B0, B0);
         vegetable_texture.fill(Qt::green);
     }
     
-    exit_texture.load(":/ui/exit_flag.png");
+    exit_texture.load(":/images/door.png");
     if (exit_texture.isNull()) {
         // 如果没有出口图片，创建一个简单的红色方块
         exit_texture = QPixmap(B0, B0);
         exit_texture.fill(Qt::red);
     }
     
-    // 加载箭机关纹理
-    arrow_trap_right_texture.load("Picture/arrow_trap_right.svg");
-    arrow_trap_left_texture.load("Picture/arrow_trap_left.svg");
-    arrow_trap_up_texture.load("Picture/arrow_trap_up.svg");
-    arrow_trap_down_texture.load("Picture/arrow_trap_down.svg");
+    // 加载箭机关纹理（统一使用 archery.png）
+    arrow_trap_right_texture.load(":/images/archery.png");
+    arrow_trap_left_texture.load(":/images/archery.png");
+    arrow_trap_up_texture.load(":/images/archery.png");
+    arrow_trap_down_texture.load(":/images/archery.png");
+    // 修正箭机关默认朝向：顺时针旋转90°
+    {
+        QTransform archeryRotate;
+        archeryRotate.rotate(90);
+        if (!arrow_trap_right_texture.isNull())
+            arrow_trap_right_texture = arrow_trap_right_texture.transformed(archeryRotate, Qt::SmoothTransformation);
+        if (!arrow_trap_left_texture.isNull())
+            arrow_trap_left_texture = arrow_trap_left_texture.transformed(archeryRotate, Qt::SmoothTransformation);
+        if (!arrow_trap_up_texture.isNull())
+            arrow_trap_up_texture = arrow_trap_up_texture.transformed(archeryRotate, Qt::SmoothTransformation);
+        if (!arrow_trap_down_texture.isNull())
+            arrow_trap_down_texture = arrow_trap_down_texture.transformed(archeryRotate, Qt::SmoothTransformation);
+    }
+    
+    // 加载移动平台和开关门纹理（如果没有图片，创建简单的颜色方块）
+    horizontal_platform_texture.load(":/images/moving_platform.png");
+    if (horizontal_platform_texture.isNull()) {
+        horizontal_platform_texture = QPixmap(B0 * 2, B0);
+        horizontal_platform_texture.fill(QColor(139, 69, 19)); // 棕色
+    }
+
+    vertical_platform_texture.load(":/images/moving_platform.png");
+    if (vertical_platform_texture.isNull()) {
+        vertical_platform_texture = QPixmap(B0, B0 * 2);
+        vertical_platform_texture.fill(QColor(139, 69, 19)); // 棕色
+    }
+    
+    switch_texture.load(":/images/switch.svg");
+    if (switch_texture.isNull()) {
+        switch_texture = QPixmap(B0, B0);
+        switch_texture.fill(QColor(255, 255, 0)); // 黄色
+    }
+    
+    door_texture.load(":/images/door.png");
+    if (door_texture.isNull()) {
+        door_texture = QPixmap(B0, B0);
+        door_texture.fill(QColor(101, 67, 33)); // 深棕色
+    }
+
+    // 加载箭矢纹理（保持原始方向）
+    arrow_texture.load(":/images/arrow.png");
+    if (arrow_texture.isNull()) {
+        arrow_texture = QPixmap(B0, B0 / 4);
+        arrow_texture.fill(Qt::red);
+    }
     
     init();
-    
+
     // 初始化关卡管理器并加载第一关
     LevelManager::getInstance().initialize();
     loadLevelInternal(0);  // 加载教学关卡
-    
+
     gameStart();
     updatenum=0;
+
+    // +++ 新增：初始化残影计时器
+    lastAfterimageTime = 0;
 }
 GameScene::~GameScene() {
     // 若有动态分配的资源，在此释放
+    if (pause_menu) {
+        delete pause_menu;
+        pause_menu = nullptr;
+    }
 }
 void GameScene::init()
 {
@@ -155,10 +214,52 @@ void GameScene::gameStart()
     Timer.disconnect();
     Timer.start();
     level_timer.restart();
+    
+    // 初始化移动平台和开关门
+    initializeMovingPlatforms();
+    initializeSwitchDoors();
+    
     // pl.setMoveState(leftpress,rightpress);
     connect(&Timer,&QTimer::timeout,[=](){
+        // 如果游戏暂停，不更新游戏逻辑
+        if (is_paused) {
+            return;
+        }
+        
         tick_counter++;
+        
+        // === 新增：更新移动平台 ===
+        updateMovingPlatforms();
+        
+        // 保存玩家移动前的位置
+        int prev_x = pl.x;
+        int prev_y = pl.y;
+        
         pl.update();
+
+        // +++ 新增：更新残影逻辑
+        updateAfterimages();
+
+        // 只有当玩家不在移动平台上，或者在移动平台上但有主动输入时，才处理左右移动和动画
+        if (!pl.onMovingPlatform || (pl.onMovingPlatform && (leftpress || rightpress))) {
+            if(leftpress) pl.left();
+            if(rightpress) pl.right();
+        }
+
+        // 动画状态由player.updateAnimationState()统一处理，此处不再重复处理
+        
+        // === 新增：检查移动平台碰撞（在玩家更新后） ===
+        checkMovingPlatformCollisions();
+        
+        // === 新增：处理玩家跟随移动平台（在碰撞检测后，独立处理） ===
+        handlePlatformFollowing();
+        
+        // 检查门碰撞，如果与关闭的门碰撞则恢复到之前的位置
+        QRectF playerRect(pl.x, pl.y, pl.w, pl.h);
+        if (checkDoorCollision(playerRect)) {
+            pl.x = prev_x;
+            pl.y = prev_y;
+        }
         
         // 箭机关：周期性发射箭矢
         if (current_level_data && tick_counter % 60 == 0) { // 每1秒发射一次
@@ -176,19 +277,19 @@ void GameScene::gameStart()
                         direction = e.properties.value("direction").toString();
                     }
                     
-                    float speed = 6.0f; // 3格/秒的速度
+                    float speed = 6.0f; // 约3格/秒的速度
                     if (direction == "right") {
                         p.vel = QPointF(speed, 0.0);
-                        p.size = QPointF(3 * B0, 6.0); // 3格长的箭
+                        p.size = QPointF(2 * B0, 8.0); // 调整箭大小：长度2格，厚度8像素
                     } else if (direction == "left") {
                         p.vel = QPointF(-speed, 0.0);
-                        p.size = QPointF(3 * B0, 6.0);
+                        p.size = QPointF(2 * B0, 8.0);
                     } else if (direction == "up") {
                         p.vel = QPointF(0.0, -speed);
-                        p.size = QPointF(6.0, 3 * B0);
+                        p.size = QPointF(8.0, 2 * B0);
                     } else if (direction == "down") {
                         p.vel = QPointF(0.0, speed);
-                        p.size = QPointF(6.0, 3 * B0);
+                        p.size = QPointF(8.0, 2 * B0);
                     }
                     
                     projectiles.push_back(p);
@@ -201,21 +302,58 @@ void GameScene::gameStart()
             for (auto &p : projectiles) {
                 if (!p.active) continue;
                 p.pos += p.vel;
-                if (p.pos.x() < -50 || p.pos.x() > XSIZE + 50) {
+                
+                // 检查出界
+                if (p.pos.x() < -50 || p.pos.x() > XSIZE + 50 || p.pos.y() < -50 || p.pos.y() > YSIZE + 50) {
                     p.active = false;
                     continue;
                 }
+                
                 QRectF arrowRect(p.pos.x(), p.pos.y(), p.size.x(), p.size.y());
+                
+                // 检查与玩家的碰撞
                 if (arrowRect.intersects(playerRect)) {
                     is_dead = true;
                     Timer.stop();
                     gameover();
                     return;
                 }
+                
+                // 检查与方块的碰撞
+                bool hitBlock = false;
+                
+                // 检查箭矢四个角是否与实心方块碰撞
+                int leftCol = static_cast<int>(p.pos.x()) / B0;
+                int rightCol = static_cast<int>(p.pos.x() + p.size.x()) / B0;
+                int topRow = static_cast<int>(p.pos.y()) / B0;
+                int bottomRow = static_cast<int>(p.pos.y() + p.size.y()) / B0;
+                
+                // 确保坐标在地图范围内
+                leftCol = qMax(0, qMin(leftCol, GRID_WIDTH - 1));
+                rightCol = qMax(0, qMin(rightCol, GRID_WIDTH - 1));
+                topRow = qMax(0, qMin(topRow, GRID_HEIGHT - 1));
+                bottomRow = qMax(0, qMin(bottomRow, GRID_HEIGHT - 1));
+                
+                // 检查箭矢覆盖的所有网格
+                for (int col = leftCol; col <= rightCol && !hitBlock; ++col) {
+                    for (int row = topRow; row <= bottomRow && !hitBlock; ++row) {
+                        if (map[col][row] == 1) { // 实心方块
+                            hitBlock = true;
+                        }
+                    }
+                }
+                
+                // 如果与方块碰撞，标记箭矢为无效
+                if (hitBlock) {
+                    p.active = false;
+                }
             }
             // 清理无效箭矢
             projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), [](const Projectile& pr){return !pr.active;}), projectiles.end());
         }
+        
+        // === 新增：检查开关碰撞 ===
+        checkSwitchCollisions();
         
         // === 新增：检查游戏元素碰撞 ===
         checkGameElementCollisions();
@@ -235,6 +373,26 @@ void GameScene::gameStart()
 }
 void GameScene::keyPressEvent(QKeyEvent *event) //按键事件
 {
+    // ESC键暂停/恢复游戏
+    if (event->key() == Qt::Key_Escape)
+    {
+        if (is_paused)
+        {
+            resumeGame();
+        }
+        else
+        {
+            pauseGame();
+        }
+        return;
+    }
+    
+    // 如果游戏暂停，不处理其他按键
+    if (is_paused)
+    {
+        return;
+    }
+    
     if (event->key() == Qt::Key_A && event->type())
     {
         // leftpress = 1;
@@ -247,14 +405,25 @@ void GameScene::keyPressEvent(QKeyEvent *event) //按键事件
         // pl.setMoveState(leftpress, rightpress);
         pl.setRightPressed(true);
     }
-    else if (event->key() == Qt::Key_K && !pl.isJump)
+    else if (event->key() == Qt::Key_K && !pl.isJump && (pl.onGround || pl.onMovingPlatform))
     {
         pl.jump();
+    }
+    // +++ 新增：Shift键触发冲刺
+    else if (event->key() == Qt::Key_Shift && !event->isAutoRepeat())
+    {
+        pl.startDash();
     }
     update();
 }
 void GameScene::keyReleaseEvent(QKeyEvent *event)//松开按键事件
 {
+    // 如果游戏暂停，不处理按键释放
+    if (is_paused)
+    {
+        return;
+    }
+    
     if (event->key() == Qt::Key_A && event->type())
     {
         // leftpress = 0;
@@ -267,6 +436,17 @@ void GameScene::keyReleaseEvent(QKeyEvent *event)//松开按键事件
     }
     update();
 }
+
+void GameScene::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    
+    // 如果暂停菜单存在且可见，调整其大小
+    if (pause_menu && pause_menu->isVisible()) {
+        pause_menu->resize(this->size());
+    }
+}
+
 void GameScene::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
@@ -292,14 +472,46 @@ void GameScene::paintEvent(QPaintEvent *event)
     // 绘制游戏元素
     drawGameElements(painter);
     
-    // 绘制箭矢
-    painter.setBrush(QBrush(Qt::red));
-    painter.setPen(Qt::NoPen);
+    // 绘制箭矢（使用贴图并根据方向旋转/镜像）
     for (const auto &p : projectiles) {
         if (!p.active) continue;
-        painter.drawRect(QRectF(p.pos.x(), p.pos.y(), p.size.x(), p.size.y()));
+        QRectF arrowRect(p.pos.x(), p.pos.y(), p.size.x(), p.size.y());
+        QPixmap pix = arrow_texture;
+        // 根据速度方向旋转或镜像
+        if (std::abs(p.vel.y()) > std::abs(p.vel.x())) {
+            // 垂直方向
+            QTransform tf;
+            if (p.vel.y() < 0) {
+                tf.rotate(-90);
+            } else {
+                tf.rotate(90);
+            }
+            pix = pix.transformed(tf, Qt::SmoothTransformation);
+        } else {
+            // 水平方向：向左时镜像
+            if (p.vel.x() < 0) {
+                pix = QPixmap::fromImage(pix.toImage().mirrored(true, false));
+            }
+        }
+        painter.drawPixmap(arrowRect.toRect(), pix);
     }
     
+    if (!afterimages.isEmpty()) {
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        // 遍历所有残影
+        for (const auto& img : afterimages) {
+            qint64 age = now - img.spawnTime;
+            // 计算透明度 (残影越老越透明)
+            double opacity = 1.0 - (double)age / AFTERIMAGE_LIFETIME;
+
+            if (opacity > 0.1) { // 只绘制还未完全消失的
+                painter.setOpacity(opacity * 0.5); // 设置最大 50% 的透明度
+                painter.drawPixmap(img.rect.toRect(), img.frame);
+            }
+        }
+        painter.setOpacity(1.0); // 恢复不透明度，准备绘制玩家
+    }
+
     // 绘制玩家角色
     QPixmap currentFrame = pl.getCurrentAnimationFrame();
     if (!currentFrame.isNull()) {
@@ -364,6 +576,7 @@ bool GameScene::loadLevelInternal(int levelIndex)
         qDebug() << "无法加载关卡" << levelIndex;
         return false;
     }
+    current_level_data->setCustomLevel(false);
     
     // 设置当前关卡
     LevelManager::getInstance().setCurrentLevel(levelIndex);
@@ -427,6 +640,7 @@ bool GameScene::loadLevelFromFile(const QString& filePath)
     
     // 保存当前关卡数据
     current_level_data = levelData;
+    current_level_data->setCustomLevel(true);
     
     // 重置关卡状态
     resetLevel();
@@ -489,26 +703,49 @@ void GameScene::checkGameElementCollisions()
                 if (!alreadyCollected) collectItem(element);
                 break;
             case GameElementType::LevelExit: {
-                // 检查是否收集了所有青菜
-                bool allVegetablesCollected = true;
+                // 检查关卡完成条件
+                bool canComplete = false;
                 const auto& objectives = current_level_data->getObjectives();
-                for (const auto& obj : objectives) {
-                    if (obj.objective_type == "collect_vegetables" && !obj.isCompleted()) {
-                        allVegetablesCollected = false;
-                        break;
+                
+                if (objectives.isEmpty()) {
+                    // 没有设置目标，直接允许通关（向后兼容）
+                    canComplete = true;
+                } else {
+                    // 有目标设置，检查是否有青菜收集目标
+                    bool hasVegetableObjective = false;
+                    bool allVegetablesCollected = true;
+                    
+                    for (const auto& obj : objectives) {
+                        if (obj.objective_type == "collect_vegetables") {
+                            hasVegetableObjective = true;
+                            if (!obj.isCompleted()) {
+                                allVegetablesCollected = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (hasVegetableObjective) {
+                        // 有青菜收集目标，必须完成才能通关
+                        canComplete = allVegetablesCollected;
+                    } else {
+                        // 没有青菜收集目标，检查所有其他目标是否完成
+                        canComplete = current_level_data->areAllObjectivesCompleted();
                     }
                 }
                 
-                if (allVegetablesCollected) {
-                    // 青菜收集完毕，可以通关
-                    if (!alreadyCollected) collectItem(element);
-                    Timer.stop();
-                    gamewin();
-                    return;
+                if (canComplete) {
+                    // 可以通关
+                    if (!alreadyCollected) {
+                        collectItem(element);
+                        Timer.stop();
+                        gamewin();
+                        return;
+                    }
                 } else {
-                    // 青菜未收集完毕，显示提示
-                    qDebug() << "还有青菜未收集完毕，无法通关！";
-                    showGameMessage("还有青菜未收集完毕，无法通关！", 3000);
+                    // 未满足通关条件，显示提示
+                    qDebug() << "还有目标未完成，无法通关！";
+                    showGameMessage("还有目标未完成，无法通关！", 3000);
                 }
                 break;
             }
@@ -682,24 +919,212 @@ void GameScene::drawGameElements(QPainter& painter)
                 }
             }
             break;
+        case GameElementType::HorizontalPlatform:
+            texture = horizontal_platform_texture;
+            break;
+        case GameElementType::VerticalPlatform:
+            texture = vertical_platform_texture;
+            break;
+        case GameElementType::Switch:
+            texture = switch_texture;
+            break;
+        case GameElementType::Door:
+            texture = door_texture;
+            break;
         default:
             continue;
         }
         
-        const int x = static_cast<int>(element.position.x());
-        const int y = static_cast<int>(element.position.y());
+        int x = static_cast<int>(element.position.x());
+        int y = static_cast<int>(element.position.y());
         const int w = static_cast<int>(element.size.x());
         const int h = static_cast<int>(element.size.y());
         
-        if (!texture.isNull() && (element.element_type == GameElementType::Vegetable || element.element_type == GameElementType::LevelExit)) {
+        // 对于移动平台，使用动态位置
+        if (element.element_type == GameElementType::HorizontalPlatform || 
+            element.element_type == GameElementType::VerticalPlatform) {
+            for (const auto& platform : moving_platforms) {
+                if (platform.element_index == &element - &elements[0]) {
+                    x = static_cast<int>(platform.current_pos.x());
+                    y = static_cast<int>(platform.current_pos.y());
+                    break;
+                }
+            }
+        }
+        
+        // 对于门，检查是否应该显示（门关闭时显示）
+        bool shouldDraw = true;
+        if (element.element_type == GameElementType::Door) {
+            for (const auto& switchDoor : switch_doors) {
+                if (switchDoor.door_element_index == &element - &elements[0]) {
+                    shouldDraw = !switchDoor.door_is_open;
+                    break;
+                }
+            }
+        }
+        
+        if (!shouldDraw) continue;
+        
+        if (!texture.isNull() && element.element_type == GameElementType::Vegetable) {
             painter.drawPixmap(x, y, w, h, texture);
+        } else if (!texture.isNull() && element.element_type == GameElementType::LevelExit) {
+            // 检查是否收集了所有青菜
+            bool allVegetablesCollected = true;
+            const auto& objectives = current_level_data->getObjectives();
+            for (const auto& obj : objectives) {
+                if (obj.objective_type == "collect_vegetables" && !obj.isCompleted()) {
+                    allVegetablesCollected = false;
+                    break;
+                }
+            }
+            
+            if (allVegetablesCollected) {
+                // 青菜收集完毕，正常显示终点
+                painter.drawPixmap(x, y, w, h, texture);
+            } else {
+                // 青菜未收集完毕，半透明显示终点，表示无法通关
+                painter.setOpacity(0.3);
+                painter.drawPixmap(x, y, w, h, texture);
+                painter.setOpacity(1.0); // 恢复透明度
+            }
         } else if (!texture.isNull() && (element.element_type == GameElementType::Water || element.element_type == GameElementType::Lava || element.element_type == GameElementType::ArrowTrap)) {
+            painter.drawPixmap(x, y, w, h, texture);
+        } else if (!texture.isNull() && (element.element_type == GameElementType::HorizontalPlatform || 
+                                        element.element_type == GameElementType::VerticalPlatform ||
+                                        element.element_type == GameElementType::Switch ||
+                                        element.element_type == GameElementType::Door)) {
             painter.drawPixmap(x, y, w, h, texture);
         } else if (drawRect) {
             painter.setPen(Qt::NoPen);
             painter.setBrush(QBrush(rectColor));
             painter.drawRect(QRect(x, y, w, h));
         }
+    }
+}
+
+// === 暂停功能实现 ===
+
+void GameScene::pauseGame()
+{
+    if (is_paused) return;
+    
+    is_paused = true;
+    
+    // 创建暂停菜单（如果还没有创建）
+    if (!pause_menu) {
+        createPauseMenu();
+    }
+    
+    showPauseMenu();
+    qDebug() << "Game paused";
+}
+
+void GameScene::resumeGame()
+{
+    if (!is_paused) return;
+    
+    is_paused = false;
+    hidePauseMenu();
+    qDebug() << "Game resumed";
+}
+
+void GameScene::createPauseMenu()
+{
+    // 创建暂停菜单容器
+    pause_menu = new QWidget(this);
+    pause_menu->setStyleSheet("background-color: rgba(0, 0, 0, 180);"); // 半透明黑色背景
+    
+    // 创建菜单面板
+    QWidget* menu_panel = new QWidget(pause_menu);
+    menu_panel->setStyleSheet(
+        "QWidget {"
+        "    background-color: rgba(50, 50, 50, 220);"
+        "    border: 2px solid #888;"
+        "    border-radius: 10px;"
+        "}"
+    );
+    menu_panel->setFixedSize(300, 250);
+    
+    // 创建标题
+    QLabel* title_label = new QLabel("游戏暂停", menu_panel);
+    title_label->setStyleSheet(
+        "QLabel {"
+        "    color: white;"
+        "    font-size: 24px;"
+        "    font-weight: bold;"
+        "    background: transparent;"
+        "    border: none;"
+        "}"
+    );
+    title_label->setAlignment(Qt::AlignCenter);
+    
+    // 创建按钮
+    resume_button = new QPushButton("继续游戏", menu_panel);
+    restart_button = new QPushButton("重新开始", menu_panel);
+    main_menu_button = new QPushButton("返回主菜单", menu_panel);
+    
+    // 设置按钮样式
+    QString button_style = 
+        "QPushButton {"
+        "    background-color: #4CAF50;"
+        "    color: white;"
+        "    border: none;"
+        "    padding: 10px;"
+        "    font-size: 16px;"
+        "    border-radius: 5px;"
+        "    min-width: 120px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #45a049;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #3d8b40;"
+        "}";
+    
+    resume_button->setStyleSheet(button_style);
+    restart_button->setStyleSheet(button_style.replace("#4CAF50", "#2196F3").replace("#45a049", "#1976D2").replace("#3d8b40", "#1565C0"));
+    main_menu_button->setStyleSheet(button_style.replace("#2196F3", "#f44336").replace("#1976D2", "#d32f2f").replace("#1565C0", "#c62828"));
+    
+    // 连接按钮信号
+    connect(resume_button, &QPushButton::clicked, this, &GameScene::resumeGame);
+    connect(restart_button, &QPushButton::clicked, this, &GameScene::restartLevel);
+    connect(main_menu_button, &QPushButton::clicked, [this]() {
+        resumeGame();
+        emit backToMainMenu();
+    });
+    
+    // 布局
+    QVBoxLayout* panel_layout = new QVBoxLayout(menu_panel);
+    panel_layout->addWidget(title_label);
+    panel_layout->addSpacing(20);
+    panel_layout->addWidget(resume_button);
+    panel_layout->addSpacing(10);
+    panel_layout->addWidget(restart_button);
+    panel_layout->addSpacing(10);
+    panel_layout->addWidget(main_menu_button);
+    panel_layout->setAlignment(Qt::AlignCenter);
+    
+    // 将菜单面板居中放置
+    QVBoxLayout* main_layout = new QVBoxLayout(pause_menu);
+    main_layout->addWidget(menu_panel, 0, Qt::AlignCenter);
+    
+    pause_menu->hide();
+}
+
+void GameScene::showPauseMenu()
+{
+    if (pause_menu) {
+        // 调整暂停菜单大小以覆盖整个游戏窗口
+        pause_menu->resize(this->size());
+        pause_menu->show();
+        pause_menu->raise(); // 确保在最上层
+    }
+}
+
+void GameScene::hidePauseMenu()
+{
+    if (pause_menu) {
+        pause_menu->hide();
     }
 }
 
@@ -711,6 +1136,9 @@ void GameScene::resetLevel()
     // 清理所有胜利界面相关的子控件
     QList<QWidget*> childWidgets = this->findChildren<QWidget*>();
     for (QWidget* child : childWidgets) {
+        if (child == pause_menu || (pause_menu && pause_menu->isAncestorOf(child))) {
+            continue;
+        }
         if (child != this && child->parent() == this) {
             // 检查是否是胜利界面相关的控件
             if (child->styleSheet().contains("rgba(0, 0, 0, 180)") || 
@@ -725,6 +1153,14 @@ void GameScene::resetLevel()
     
     // 清空箭矢
     projectiles.clear();
+
+    // +++ 新增：清空残影
+    afterimages.clear();
+    lastAfterimageTime = 0;
+
+    // 重置移动平台和开关门状态
+    moving_platforms.clear();
+    switch_doors.clear();
     
     // 重置游戏状态
     begin = false;
@@ -751,8 +1187,21 @@ void GameScene::resetLevel()
         // 重置关卡目标进度
         current_level_data->resetObjectiveProgress();
     }
-    
     qDebug() << "关卡状态已重置，包括胜利界面";
+}
+
+void GameScene::restartLevel()
+{
+    resumeGame();
+    resetLevel();
+    gameStart();
+    if (current_level_data) {
+        if (current_level_data->isCustomLevel()) {
+            loadLevelFromFile(current_level_data->getFilePath());
+        } else {
+            loadLevelInternal(LevelManager::getInstance().getCurrentLevelIndex());
+        }
+    }
 }
 
 void GameScene::gamewin()
@@ -909,12 +1358,17 @@ void GameScene::gameover()
     retry->setStyleSheet("QPushButton {background-color: #FFA000; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; padding: 10px 22px;} QPushButton:hover {background-color: #FB8C00;} QPushButton:pressed {background-color: #F57C00;}");
     connect(retry, &QPushButton::clicked, [this, overWidget]() {
         overWidget->deleteLater();
-        // 重新加载当前关卡
-        int idx = LevelManager::getInstance().getCurrentLevelIndex();
-        loadLevelInternal(idx);
+        resetLevel();
+        gameStart();
+        // 重新加载当前关卡，检查是否为自定义关卡
+        if (current_level_data && current_level_data->isCustomLevel()) {
+            loadLevelFromFile(current_level_data->getFilePath());
+        } else {
+            int idx = LevelManager::getInstance().getCurrentLevelIndex();
+            loadLevelInternal(idx);
+        }
         is_dead = false;
         projectiles.clear();
-        gameStart();
     });
     btns->addWidget(retry);
     
@@ -1123,6 +1577,339 @@ void GameScene::unlockLevel(int levelIndex)
             qDebug() << "关卡" << levelIndex << "已解锁";
         } else {
             qDebug() << "无法保存关卡解锁进度";
+        }
+    }
+}
+
+// === 移动平台和开关门方法实现 ===
+
+void GameScene::initializeMovingPlatforms()
+{
+    moving_platforms.clear();
+    
+    if (!current_level_data) return;
+    
+    const auto& elements = current_level_data->getGameElements();
+    for (int i = 0; i < elements.size(); ++i) {
+        const auto& element = elements[i];
+        
+        if (element.element_type == GameElementType::HorizontalPlatform ||
+            element.element_type == GameElementType::VerticalPlatform) {
+            
+            MovingPlatformState platform;
+            platform.element_index = i;
+            platform.current_pos = element.position;
+            platform.start_pos = element.position;
+            platform.moving_to_end = true;
+            
+            // 从属性中获取终点位置
+            if (element.properties.contains("end_x") && element.properties.contains("end_y")) {
+                platform.end_pos = QPointF(
+                    element.properties["end_x"].toDouble(),
+                    element.properties["end_y"].toDouble()
+                );
+            } else {
+                // 默认终点位置（如果没有指定）
+                if (element.element_type == GameElementType::HorizontalPlatform) {
+                    platform.end_pos = element.position + QPointF(B0 * 3, 0); // 向右移动3格
+                } else {
+                    platform.end_pos = element.position + QPointF(0, B0 * 3); // 向下移动3格
+                }
+            }
+            
+            // 计算移动速度（每秒移动1格）
+            QPointF direction = platform.end_pos - platform.start_pos;
+            float distance = sqrt(direction.x() * direction.x() + direction.y() * direction.y());
+            if (distance > 0) {
+                float speed = B0 / 60.0f; // 每帧移动的距离（60FPS）
+                platform.velocity = direction * (speed / distance);
+            } else {
+                platform.velocity = QPointF(0, 0);
+            }
+            
+            moving_platforms.append(platform);
+        }
+    }
+}
+
+void GameScene::updateMovingPlatforms()
+{
+    for (auto& platform : moving_platforms) {
+        if (platform.velocity.x() == 0 && platform.velocity.y() == 0) continue;
+        
+        // 更新位置
+        platform.current_pos += platform.velocity;
+        
+        // 检查是否到达终点
+        QPointF target = platform.moving_to_end ? platform.end_pos : platform.start_pos;
+        QPointF diff = target - platform.current_pos;
+        
+        // 如果接近目标点，切换方向
+        if (abs(diff.x()) < 2.0f && abs(diff.y()) < 2.0f) {
+            platform.current_pos = target;
+            platform.moving_to_end = !platform.moving_to_end;
+            platform.velocity = -platform.velocity;
+        }
+    }
+}
+
+void GameScene::initializeSwitchDoors()
+{
+    switch_doors.clear();
+    
+    if (!current_level_data) return;
+    
+    const auto& elements = current_level_data->getGameElements();
+    
+    // 查找所有开关和门的配对
+    for (int i = 0; i < elements.size(); ++i) {
+        if (elements[i].element_type == GameElementType::Switch) {
+            // 查找对应的门
+            for (int j = 0; j < elements.size(); ++j) {
+                if (elements[j].element_type == GameElementType::Door) {
+                    // 检查是否有配对信息
+                    QString switchId = elements[i].properties.value("switch_id").toString();
+                    if (switchId.isEmpty()) switchId = QString::number(i);
+                    QString doorId = elements[j].properties.value("door_id").toString();
+                    if (doorId.isEmpty()) doorId = QString::number(j);
+                    
+                    if (switchId == doorId || 
+                        (elements[i].properties.contains("paired_door") && 
+                         elements[i].properties["paired_door"].toInt() == j)) {
+                        
+                        SwitchDoorState switchDoor;
+                        switchDoor.switch_element_index = i;
+                        switchDoor.door_element_index = j;
+                        switchDoor.is_activated = false;
+                        switchDoor.door_is_open = false;
+                        
+                        switch_doors.append(switchDoor);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void GameScene::checkSwitchCollisions()
+{
+    if (!current_level_data) return;
+    
+    const auto& elements = current_level_data->getGameElements();
+    QRectF playerRect(pl.x, pl.y, pl.w, pl.h);
+    
+    for (auto& switchDoor : switch_doors) {
+        if (switchDoor.is_activated) continue;
+        
+        const auto& switchElement = elements[switchDoor.switch_element_index];
+        QRectF switchRect(switchElement.position.x(), switchElement.position.y(),
+                         switchElement.size.x(), switchElement.size.y());
+        
+        if (playerRect.intersects(switchRect)) {
+            activateSwitch(switch_doors.indexOf(switchDoor));
+        }
+    }
+}
+
+void GameScene::checkMovingPlatformCollisions()
+{
+    if (!current_level_data) return;
+
+    QRectF playerRect(pl.x, pl.y, pl.w, pl.h);
+    bool isSupported = false; // 标记玩家本帧是否被任何平面支撑
+
+    // 默认玩家不在移动平台上，除非检测到
+    pl.onMovingPlatform = false;
+
+    for (int i = 0; i < moving_platforms.size(); ++i) {
+        const auto& platform = moving_platforms[i];
+        const auto& element = current_level_data->getGameElements()[platform.element_index];
+        QRectF platformRect(platform.current_pos.x(), platform.current_pos.y(), element.size.x(), element.size.y());
+
+        // 优化检测条件：只关心玩家是否在平台上方，并且即将或正在接触
+        bool isHorizontallyAligned = playerRect.right() > platformRect.left() && playerRect.left() < platformRect.right();
+        qreal vertical_tolerance = 5.0;
+        bool isVerticallyClose = (pl.y + pl.h) >= platformRect.top() && (pl.y + pl.h) <= (platformRect.top() + vertical_tolerance);
+
+        if (isHorizontallyAligned && isVerticallyClose) {
+            // 玩家在平台上方
+            pl.y = platformRect.top() - pl.h; // 精确地将玩家放在平台表面
+            
+            // 关键修复：只有当玩家向下运动或静止时才重置跳跃状态
+            // 这样可以保证玩家的跳跃意图不被打断
+            if (pl.v0 >= 0) {  // 向下运动或静止
+                pl.v0 = 0;
+                pl.isJump = false;
+            }
+            // 如果玩家正在向上跳跃（v0 < 0），不重置跳跃状态，让玩家继续跳跃
+            
+            isSupported = true; // 玩家被支撑
+            pl.onMovingPlatform = true; // 确认在移动平台上
+            pl.onGround = true; // 强制设置onGround为true，确保可以跳跃
+
+            pl.resetAirDash(); // +++ 新增：在移动平台落地时，重置空中冲刺
+
+            // 如果这是玩家新接触的平台，或者平台索引变了，则更新相对位置
+            if (pl.currentPlatformIndex != i) {
+                pl.currentPlatformIndex = i;
+                pl.platformRelativeX = pl.x - platform.current_pos.x();
+                pl.platformRelativeY = pl.y - (platform.current_pos.y() - pl.h);
+            }
+            
+            // 既然已经找到了支撑平台，就没必要再检查其他移动平台了
+            break; 
+        }
+        // （可选）在这里可以补充处理水平碰撞和头部碰撞的逻辑
+    }
+
+    // 如果没有被任何移动平台支撑，则检查静态地面
+    if (!isSupported) {
+        pl.currentPlatformIndex = -1; // 不在任何移动平台上
+        if (pl.is_ground()) {
+            isSupported = true;
+        }
+    }
+
+    // 最终根据isSupported状态更新onGround
+    pl.onGround = isSupported;
+}
+
+void GameScene::activateSwitch(int switch_index)
+{
+    if (switch_index < 0 || switch_index >= switch_doors.size()) return;
+    
+    auto& switchDoor = switch_doors[switch_index];
+    if (switchDoor.is_activated) return;
+    
+    switchDoor.is_activated = true;
+    switchDoor.door_is_open = true;
+    
+    // 可以在这里添加音效或视觉效果
+    qDebug() << "Switch activated! Door opened.";
+}
+
+bool GameScene::checkDoorCollision(const QRectF& playerRect)
+{
+    if (!current_level_data) return false;
+    
+    const auto& elements = current_level_data->getGameElements();
+    
+    for (const auto& switchDoor : switch_doors) {
+        // 只检查关闭的门
+        if (switchDoor.door_is_open) continue;
+        
+        const auto& doorElement = elements[switchDoor.door_element_index];
+        QRectF doorRect(doorElement.position.x(), doorElement.position.y(),
+                       doorElement.size.x(), doorElement.size.y());
+        
+        if (playerRect.intersects(doorRect)) {
+            return true; // 与关闭的门发生碰撞
+        }
+    }
+    
+    return false; // 没有碰撞
+}
+
+void GameScene::handlePlatformFollowing()
+{
+    // 如果玩家不在移动平台上，重置相关状态
+    if (!pl.onMovingPlatform) {
+        pl.currentPlatformIndex = -1;
+        pl.platformRelativeX = 0.0;
+        pl.platformRelativeY = 0.0;
+        return;
+    }
+    
+    // 如果玩家在移动平台上，处理相对位置逻辑
+    if (pl.currentPlatformIndex >= 0 && pl.currentPlatformIndex < moving_platforms.size()) {
+        const auto& platform = moving_platforms[pl.currentPlatformIndex];
+        const auto& element = current_level_data->getGameElements()[platform.element_index];
+
+        // 检查玩家是否在主动移动
+        bool isActivelyMoving = pl.getLeftPressed() || pl.getRightPressed();
+        bool isActivelyJumping = pl.isJump && pl.v0 < 0; // 正在向上跳跃
+
+        // 处理水平跟随
+        if (isActivelyMoving) {
+            // 玩家主动移动时，更新相对位置
+            pl.platformRelativeX = pl.x - platform.current_pos.x();
+        } else {
+            // 玩家没有主动移动时，保持相对位置不变
+            // 根据平台的当前位置和相对位置计算玩家的绝对位置
+            double newPlayerX = platform.current_pos.x() + pl.platformRelativeX;
+
+            // 检查边界，确保玩家不会超出平台范围太远
+            double platformLeft = platform.current_pos.x();
+            double platformRight = platform.current_pos.x() + element.size.x();
+            double playerLeft = newPlayerX;
+            double playerRight = newPlayerX + pl.w;
+
+            // 如果玩家完全在平台范围内或者有合理的重叠，则跟随平台
+            if (playerRight > platformLeft && playerLeft < platformRight) {
+                pl.x = newPlayerX;
+            } else {
+                // 玩家离开平台范围，停止跟随
+                pl.onMovingPlatform = false;
+                pl.currentPlatformIndex = -1;
+                pl.platformRelativeX = 0.0;
+                pl.platformRelativeY = 0.0;
+                return;
+            }
+        }
+
+        // 处理垂直跟随：与水平跟随逻辑保持一致
+        if (isActivelyJumping) {
+            // 玩家主动跳跃时，更新相对位置
+            pl.platformRelativeY = pl.y - (platform.current_pos.y() - pl.h);
+        } else {
+            // 玩家没有主动跳跃时，保持相对位置不变
+            // 根据平台的当前位置和相对位置计算玩家的绝对位置
+            double newPlayerY = (platform.current_pos.y() - pl.h) + pl.platformRelativeY;
+
+            // 检查边界，确保玩家不会超出平台范围太远
+            double platformTop = platform.current_pos.y();
+            double platformBottom = platform.current_pos.y() + element.size.y();
+            double playerTop = newPlayerY;
+            double playerBottom = newPlayerY + pl.h;
+
+            // 如果玩家完全在平台范围内或者有合理的重叠，则跟随平台
+            if (playerBottom > platformTop && playerTop < platformBottom) {
+                pl.y = newPlayerY;
+            } else {
+                // 玩家离开平台范围，停止跟随
+                pl.onMovingPlatform = false;
+                pl.currentPlatformIndex = -1;
+                pl.platformRelativeX = 0.0;
+                pl.platformRelativeY = 0.0;
+                return;
+            }
+        }
+    }
+}
+
+// +++ 新增：实现更新残影的函数 (放在 GameScene.cpp 的末尾)
+void GameScene::updateAfterimages()
+{
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    // 1. 移除过期的残影
+    afterimages.erase(std::remove_if(afterimages.begin(), afterimages.end(),
+                                     [now, this](const Afterimage& img){
+                                         // 如果残影存在时间超过了设定的LIFETIME，则移除
+                                         return (now - img.spawnTime) > AFTERIMAGE_LIFETIME;
+                                     }), afterimages.end());
+
+    // 2. 如果玩家正在冲刺，则按间隔添加新的残影
+    if (pl.getIsDashing()) {
+        if (now - lastAfterimageTime > AFTERIMAGE_INTERVAL) {
+            Afterimage newImg;
+            newImg.frame = pl.getCurrentAnimationFrame(); // 捕捉当前动画帧
+            newImg.rect = QRectF(pl.x, pl.y, pl.w, pl.h); // 捕捉当前位置
+            newImg.spawnTime = now;
+
+            afterimages.append(newImg); // 添加到列表中
+            lastAfterimageTime = now;   // 更新上次生成时间
         }
     }
 }

@@ -15,20 +15,50 @@
  * - 如果在源码目录中运行，会返回当前目录的data路径
  */
 inline QString getDataDirectory() {
+    // 优先定位源码根目录的 data：通过标识文件（CMakeLists.txt、Pic.qrc）识别工程根
     QString appDir = QApplication::applicationDirPath();
-    QDir currentDir(appDir);
-    
-    // 检查是否在build目录中（包含Desktop_Qt_*_MinGW_*等模式）
-    QString dirName = currentDir.dirName();
-    if (dirName.contains("Desktop_Qt_") && dirName.contains("MinGW")) {
-        // 在build目录中，需要回到源码目录
-        // 从 build/Desktop_Qt_6_2_4_MinGW_64_bit-Debug 回到源码根目录
-        currentDir.cdUp(); // 回到build目录
-        currentDir.cdUp(); // 回到源码根目录
+    QDir dir(appDir);
+
+    // 先尝试识别工程根目录（包含 CMakeLists.txt 与 Pic.qrc）
+    for (int i = 0; i < 8; ++i) {
+        QString root = dir.absolutePath();
+        bool hasCMake = QFileInfo(QDir(root).absoluteFilePath("CMakeLists.txt")).isFile();
+        bool hasQrc   = QFileInfo(QDir(root).absoluteFilePath("Pic.qrc")).isFile();
+        if (hasCMake && hasQrc) {
+            QString data = QDir(root).absoluteFilePath("data");
+            if (QFileInfo(data).isDir()) {
+                return data; // 返回 lion/data
+            }
+        }
+        if (!dir.cdUp()) break;
     }
-    
-    QString dataPath = currentDir.absolutePath() + "/data";
-    return dataPath;
+
+    // 次优先：向上查找存在的 data，但跳过位于 build/ 或 Desktop_Qt_* 目录下的 data
+    dir = QDir(appDir);
+    for (int i = 0; i < 8; ++i) {
+        QString parentPath = dir.absolutePath();
+        QString data = dir.absoluteFilePath("data");
+        if (QFileInfo(data).isDir()) {
+            // 跳过构建目录下的 data
+            bool isBuildDir = parentPath.contains("build", Qt::CaseInsensitive) ||
+                              parentPath.contains("Desktop_Qt_", Qt::CaseInsensitive);
+            if (!isBuildDir) {
+                return data;
+            }
+        }
+        if (!dir.cdUp()) break;
+    }
+
+    // 兜底：返回最近的 data（可能在构建目录中）或当前运行目录下的 data
+    dir = QDir(appDir);
+    for (int i = 0; i < 6; ++i) {
+        QString data = dir.absoluteFilePath("data");
+        if (QFileInfo(data).isDir()) {
+            return data;
+        }
+        if (!dir.cdUp()) break;
+    }
+    return QDir(appDir).absoluteFilePath("data");
 }
 
 /**
@@ -61,8 +91,8 @@ inline QString getSettingsDirectory() {
 #define GRID_HEIGHT (YSIZE / B0)   //垂直格子数：22
 #define TITLE "Lion Jump"
 #define BG_SPEED 1
-#define BACK_GROUND1 ":/back/Picture/gamebkg.jpg"
-#define BACK_GROUND2 ":/back/Picture/gamebkg.jpg"
-#define BLOCK5 ":/res/stone11.png"
+#define BACK_GROUND1 ":/images/background.png"
+#define BACK_GROUND2 ":/images/background.png"
+#define BLOCK5 ":/images/platform.png"
 
 #endif // CONFIG_H

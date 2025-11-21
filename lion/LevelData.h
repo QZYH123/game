@@ -24,17 +24,21 @@
  * @brief 游戏元素类型枚举
  */
 enum class GameElementType {
-    Empty = 0,          ///< 空白区域
-    SolidBlock = 1,     ///< 实心方块（地面、墙壁）
-    Vegetable = 2,      ///< 青菜（收集目标）
-    Spike = 3,          ///< 尖刺（危险元素）
-    MovingPlatform = 4, ///< 移动平台
-    Checkpoint = 5,     ///< 检查点
-    PlayerStart = 6,    ///< 玩家起始位置
-    LevelExit = 7,      ///< 关卡出口
-    ArrowTrap = 8,      ///< 箭机关（发射箭矢）
-    Water = 9,          ///< 水（减速）
-    Lava = 10           ///< 岩浆（死亡）
+    Empty = 0,              ///< 空白区域
+    SolidBlock = 1,         ///< 实心方块（地面、墙壁）
+    Vegetable = 2,          ///< 青菜（收集目标）
+    Spike = 3,              ///< 尖刺（危险元素）
+    MovingPlatform = 4,     ///< 移动平台（已废弃，保留兼容性）
+    Checkpoint = 5,         ///< 检查点
+    PlayerStart = 6,        ///< 玩家起始位置
+    LevelExit = 7,          ///< 关卡出口
+    ArrowTrap = 8,          ///< 箭机关（发射箭矢）
+    Water = 9,              ///< 水（减速）
+    Lava = 10,              ///< 岩浆（死亡）
+    HorizontalPlatform = 11,///< 水平移动平台
+    VerticalPlatform = 12,  ///< 垂直移动平台
+    Switch = 13,            ///< 开关
+    Door = 14               ///< 门
 };
 
 /**
@@ -96,15 +100,6 @@ struct LevelObjective {
     bool isCompleted() const { return current_count >= target_count; }
 };
 
-/**
- * @class LevelData
- * @brief 关卡数据管理类
- * 
- * 负责存储和管理单个关卡的所有数据，包括：
- * - 地图布局和游戏元素
- * - 关卡目标和胜利条件
- * - 关卡元数据（名称、描述等）
- */
 class LevelData
 {
 public:
@@ -119,6 +114,13 @@ public:
      * @brief 析构函数
      */
     ~LevelData() = default;
+
+    bool isCustomLevel() const { return is_custom_level; }
+    QString getFilePath() const { return file_path; }
+    void setCustomLevel(bool is_custom, const QString& path = "") {
+        is_custom_level = is_custom;
+        file_path = path;
+    }
     
     // === 基本属性访问 ===
     
@@ -304,6 +306,9 @@ private:
     QVector<LevelObjective> level_objectives;      ///< 关卡目标列表
     
     QPointF player_start_position;          ///< 玩家起始位置
+
+    bool is_custom_level;                   ///< 是否为自定义关卡
+    QString file_path;                      ///< 关卡文件路径（仅自定义关卡）
     
     /**
      * @brief 初始化关卡网格

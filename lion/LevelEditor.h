@@ -84,6 +84,12 @@ public:
      * @param direction 箭机关方向
      */
     void setCurrentArrowDirection(ArrowDirection direction);
+    
+    /**
+     * @brief 设置当前移动平台距离
+     * @param distance 移动距离（正数向上/右，负数向下/左）
+     */
+    void setCurrentPlatformDistance(int distance);
 
 signals:
     /**
@@ -127,6 +133,7 @@ private:
     LevelData* level_data;                  ///< 当前编辑的关卡数据
     GameElementType current_element_type;   ///< 当前选中的元素类型
     ArrowDirection current_arrow_direction; ///< 当前箭机关方向
+    int current_platform_distance;         ///< 当前移动平台距离
     bool show_grid;                         ///< 是否显示网格
     bool is_dragging;                       ///< 是否正在拖拽
     QPoint last_mouse_pos;                  ///< 上次鼠标位置
@@ -258,6 +265,11 @@ private slots:
     void onArrowDirectionChanged(int index);
     
     /**
+     * @brief 移动平台距离改变
+     */
+    void onPlatformDistanceChanged(int distance);
+    
+    /**
      * @brief 关卡名称改变
      */
     void onLevelNameChanged();
@@ -295,6 +307,8 @@ private:
     QComboBox* element_combo;               ///< 元素类型选择框
     QComboBox* arrow_direction_combo;       ///< 箭机关方向选择框
     QLabel* arrow_direction_label;          ///< 箭机关方向标签
+    QSpinBox* platform_distance_spinbox;    ///< 移动平台距离设置框
+    QLabel* platform_distance_label;       ///< 移动平台距离标签
     QPushButton* clear_button;              ///< 清空按钮
     QPushButton* test_button;               ///< 测试按钮
     QPushButton* back_to_menu_button;       ///< 返回主菜单按钮

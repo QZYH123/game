@@ -35,7 +35,7 @@ void SettingsPage::ui_load() {
     this->resize(1280, 720);
     
     // 设置背景图片
-    QPixmap back(":/back/Picture/setting_page.png");
+    QPixmap back(":/images/setting_page.png");
     QPixmap scaledback = back.scaled(this->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     QPalette palette;
     palette.setBrush(QPalette::Window, scaledback);

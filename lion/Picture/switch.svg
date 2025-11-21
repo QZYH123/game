@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- 开关底座 -->
+  <rect x="4" y="20" width="24" height="8" rx="2" fill="#666666" stroke="#333333" stroke-width="1"/>
+  
+  <!-- 开关按钮 -->
+  <rect x="8" y="12" width="16" height="12" rx="3" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+  
+  <!-- 开关顶部指示灯 -->
+  <circle cx="16" cy="8" r="4" fill="#FF4444" stroke="#CC0000" stroke-width="1"/>
+  
+  <!-- 开关按钮上的纹理线条 -->
+  <line x1="10" y1="15" x2="22" y2="15" stroke="#E6C200" stroke-width="0.5"/>
+  <line x1="10" y1="18" x2="22" y2="18" stroke="#E6C200" stroke-width="0.5"/>
+  <line x1="10" y1="21" x2="22" y2="21" stroke="#E6C200" stroke-width="0.5"/>
+</svg>

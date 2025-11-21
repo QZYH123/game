@@ -28,7 +28,7 @@ void LionAnimation::loadAnimationFrames() {
 
     // 加载向左帧：自动枚举 left_*.png/jpg，优先 png，并按数值序排序
     {
-        QDir dir(":/lion/Picture");
+        QDir dir(":/images");
         QStringList files = dir.entryList({"left_*.png", "left_*.jpg"}, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         QRegularExpression re("^left_(\\d+)\\.(png|jpg)$");
         QMap<int, QString> chosen;
@@ -44,7 +44,7 @@ void LionAnimation::loadAnimationFrames() {
         QList<int> keys = chosen.keys();
         std::sort(keys.begin(), keys.end());
         for (int idx : keys) {
-            QString path = QString(":/lion/Picture/%1").arg(chosen[idx]);
+            QString path = QString(":/images/%1").arg(chosen[idx]);
             QPixmap img(path);
             if (img.isNull()) {
                 qDebug() << "向左帧加载失败：" << path;
@@ -59,7 +59,7 @@ void LionAnimation::loadAnimationFrames() {
 
     // 加载向右帧：自动枚举 right_*.png/jpg，优先 png，并按数值序排序
     {
-        QDir dir(":/lion/Picture");
+        QDir dir(":/images");
         // 收集匹配的文件名
         QStringList files = dir.entryList({"right_*.png", "right_*.jpg"}, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         QRegularExpression re("^right_(\\d+)\\.(png|jpg)$");
@@ -77,7 +77,7 @@ void LionAnimation::loadAnimationFrames() {
         QList<int> keys = chosen.keys();
         std::sort(keys.begin(), keys.end());
         for (int idx : keys) {
-            QString path = QString(":/lion/Picture/%1").arg(chosen[idx]);
+            QString path = QString(":/images/%1").arg(chosen[idx]);
             QPixmap img(path);
             if (img.isNull()) {
                 qDebug() << "向右帧加载失败：" << path;
@@ -92,7 +92,7 @@ void LionAnimation::loadAnimationFrames() {
 
     // 加载跳跃帧：选择数量更多的一组（PNG或JPG），按数值序排序，避免混用造成朝向交替
     {
-        QDir dir(":/lion/Picture");
+        QDir dir(":/images");
         QStringList pngFiles = dir.entryList({"jump_*.png"}, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         QStringList jpgFiles = dir.entryList({"jump_*.jpg"}, QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         QStringList filesToUse = (jpgFiles.size() > pngFiles.size()) ? jpgFiles : pngFiles;
@@ -107,7 +107,7 @@ void LionAnimation::loadAnimationFrames() {
         QList<int> keys = chosen.keys();
         std::sort(keys.begin(), keys.end());
         for (int idx : keys) {
-            QString path = QString(":/lion/Picture/%1").arg(chosen[idx]);
+            QString path = QString(":/images/%1").arg(chosen[idx]);
             QPixmap img(path);
             if (img.isNull()) {
                 qDebug() << "跳跃帧加载失败：" << path;

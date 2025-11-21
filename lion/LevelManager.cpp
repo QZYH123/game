@@ -27,6 +27,7 @@ LevelManager::LevelManager(QObject* parent)
     QString dataDir = getDataDirectory();
     levels_directory = dataDir + "/levels";
     progress_file_path = dataDir + "/progress.json";
+    qDebug() << "关卡目录路径:" << levels_directory;
 }
 
 bool LevelManager::initialize()
@@ -459,14 +460,14 @@ void LevelManager::createDefaultTutorialLevel()
     vegetable1.element_type = GameElementType::Vegetable;
     vegetable1.position = QPointF(9 * B0, 18 * B0);
     vegetable1.size = QPointF(B0, B0);
-    vegetable1.texture_path = ":/vegetables/cabbage.png"; // 需要添加青菜图片资源
+    vegetable1.texture_path = ":/images/vegetable.png"; // 使用资源中的青菜图片
     tutorialLevel->addGameElement(vegetable1);
     
     GameElement vegetable2;
     vegetable2.element_type = GameElementType::Vegetable;
     vegetable2.position = QPointF(17 * B0, 15 * B0);
     vegetable2.size = QPointF(B0, B0);
-    vegetable2.texture_path = ":/vegetables/cabbage.png";
+    vegetable2.texture_path = ":/images/vegetable.png";
     tutorialLevel->addGameElement(vegetable2);
     
     // 添加终点
@@ -474,7 +475,7 @@ void LevelManager::createDefaultTutorialLevel()
     levelExit.element_type = GameElementType::LevelExit;
     levelExit.position = QPointF(22 * B0, 17 * B0);
     levelExit.size = QPointF(B0, B0);
-    levelExit.texture_path = ":/ui/exit_flag.png"; // 需要添加终点旗帜图片
+    levelExit.texture_path = ":/images/door.png"; // 使用门图片作为关卡出口
     tutorialLevel->addGameElement(levelExit);
     
     // 设置关卡目标

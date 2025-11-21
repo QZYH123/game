@@ -29,7 +29,7 @@ void LevelSelect::ui_load()
 {
     this->resize(1280, 720);
     
-    QPixmap back(":/back/Picture/pickbkg.jpg");
+    QPixmap back(":/images/pickbkg.jpg");
     QPixmap scaledBack = back.scaled(this->size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     QPalette palette;
     palette.setBrush(QPalette::Window, scaledBack);

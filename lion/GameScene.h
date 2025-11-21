@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "qtimer.h"
 #include "QKeyEvent"
+#include <QResizeEvent>
 #include <QLabel>
 #include <QFont>
 #include <QPushButton>
@@ -46,7 +47,23 @@ class GameScene : public QWidget
 public:
     explicit GameScene(QWidget *parent = nullptr);
     ~GameScene();
+private:
+    // +++ 新增：残影结构体
+    struct Afterimage {
+        QPixmap frame;      // 捕捉的帧
+        QRectF rect;        // 当时的位置
+        qint64 spawnTime;   // 生成时间
+    };
 
+    QList<Afterimage> afterimages; // 存储所有残影的列表
+
+    // +++ 新增：残影常量
+    const int AFTERIMAGE_LIFETIME = 300; // 残影持续时间 (ms)
+    const int AFTERIMAGE_INTERVAL = 50;  // 残影生成间隔 (ms)
+    qint64 lastAfterimageTime;           // 上次生成残影的时间
+
+    // +++ 新增：更新残影的私有方法
+    void updateAfterimages();
 public:
     QTimer Timer;
     BackGround background;
@@ -79,6 +96,12 @@ public:
     QPixmap arrow_trap_down_texture;        ///< 向下箭机关纹理
     QPushButton* back_button;               ///< 返回按钮
     
+    // === 移动平台和开关门纹理 ===
+    QPixmap horizontal_platform_texture;    ///< 水平移动平台纹理
+    QPixmap vertical_platform_texture;      ///< 垂直移动平台纹理
+    QPixmap switch_texture;                 ///< 开关纹理
+    QPixmap door_texture;                   ///< 门纹理
+    
     // 计时与状态
     QElapsedTimer level_timer;              ///< 关卡计时器
     bool is_dead = false;                   ///< 玩家死亡状态
@@ -86,9 +109,41 @@ public:
     int water_slow_counter = 0;             ///< 水减速计数
     int tick_counter = 0;                   ///< 场景tick计数
     
+    // === 暂停功能相关 ===
+    bool is_paused = false;                 ///< 游戏是否暂停
+    QWidget* pause_menu = nullptr;          ///< 暂停菜单
+    QPushButton* resume_button = nullptr;   ///< 继续游戏按钮
+    QPushButton* restart_button = nullptr;  ///< 重新开始按钮
+    QPushButton* main_menu_button = nullptr; ///< 返回主菜单按钮
+    
     // 箭矢投射物
     struct Projectile { QPointF pos; QPointF vel; QPointF size; bool active; };
     QVector<Projectile> projectiles;
+    
+    // === 移动平台状态 ===
+    struct MovingPlatformState {
+        QPointF current_pos;        ///< 当前位置
+        QPointF start_pos;          ///< 起始位置
+        QPointF end_pos;            ///< 结束位置
+        QPointF velocity;           ///< 移动速度
+        bool moving_to_end;         ///< 是否正在向终点移动
+        int element_index;          ///< 对应的游戏元素索引
+    };
+    QVector<MovingPlatformState> moving_platforms;
+    
+    // === 开关门状态 ===
+    struct SwitchDoorState {
+        bool is_activated = false;          ///< 开关是否被激活
+        int switch_element_index = -1;   ///< 开关元素索引
+        int door_element_index = -1;     ///< 门元素索引
+        bool door_is_open = false;          ///< 门是否打开
+        
+        bool operator==(const SwitchDoorState& other) const {
+            return switch_element_index == other.switch_element_index &&
+                   door_element_index == other.door_element_index;
+        }
+    };
+    QVector<SwitchDoorState> switch_doors;
     void init();
     void mapInit();
     void gameStart();
@@ -98,6 +153,7 @@ public:
     void paintEvent(QPaintEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void keyReleaseEvent(QKeyEvent *event);
+    void resizeEvent(QResizeEvent *event);
     
     /**
      * @brief 加载指定关卡（公共接口）
@@ -117,6 +173,7 @@ public:
      * @brief 重置关卡状态
      */
     void resetLevel();
+    void restartLevel();
 
 signals:
     /**
@@ -206,10 +263,82 @@ private:
     bool isLevelUnlocked(int levelIndex);
     
     /**
-     * @brief 解锁关卡
-     * @param levelIndex 要解锁的关卡索引
+     * @brief 解锁指定关卡
+     * @param levelIndex 关卡索引
      */
     void unlockLevel(int levelIndex);
+    
+    // === 暂停功能方法 ===
+    
+    /**
+     * @brief 暂停游戏
+     */
+    void pauseGame();
+    
+    /**
+     * @brief 恢复游戏
+     */
+    void resumeGame();
+    
+    /**
+     * @brief 创建暂停菜单
+     */
+    void createPauseMenu();
+    
+    /**
+     * @brief 显示暂停菜单
+     */
+    void showPauseMenu();
+    
+    /**
+     * @brief 隐藏暂停菜单
+     */
+    void hidePauseMenu();
+    
+    // === 移动平台和开关门方法 ===
+    
+    /**
+     * @brief 初始化移动平台状态
+     */
+    void initializeMovingPlatforms();
+    
+    /**
+     * @brief 更新移动平台位置
+     */
+    void updateMovingPlatforms();
+    
+    /**
+     * @brief 初始化开关门状态
+     */
+    void initializeSwitchDoors();
+    
+    /**
+     * @brief 检查玩家与开关的碰撞
+     */
+    void checkSwitchCollisions();
+    
+    /**
+     * @brief 检查玩家与移动平台的碰撞
+     */
+    void checkMovingPlatformCollisions();
+    
+    /**
+     * @brief 处理玩家跟随移动平台
+     */
+    void handlePlatformFollowing();
+    
+    /**
+     * @brief 激活开关
+     * @param switch_index 开关索引
+     */
+    void activateSwitch(int switch_index);
+    
+    /**
+     * @brief 检查门的碰撞（关闭的门阻挡玩家）
+     * @param playerRect 玩家矩形
+     * @return bool 是否与关闭的门发生碰撞
+     */
+    bool checkDoorCollision(const QRectF& playerRect);
 };
 
 #endif

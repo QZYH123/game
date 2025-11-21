@@ -14,6 +14,8 @@ LevelData::LevelData(int width, int height)
     , level_name("未命名关卡")
     , level_description("暂无描述")
     , player_start_position(X, Y)  // 使用Config.h中的默认值
+    , is_custom_level(false)
+    , file_path("")
 {
     initializeGrid();
 }
@@ -81,12 +83,18 @@ void LevelData::updateObjectiveProgress(const QString& objectiveType, int increm
 
 bool LevelData::areAllObjectivesCompleted() const
 {
+    // 如果没有设置目标，则认为已完成（向后兼容）
+    if (level_objectives.isEmpty()) {
+        return true;
+    }
+    
+    // 检查所有目标是否完成
     for (const auto& objective : level_objectives) {
         if (!objective.isCompleted()) {
             return false;
         }
     }
-    return !level_objectives.isEmpty(); // 至少要有一个目标
+    return true;
 }
 
 void LevelData::resetObjectiveProgress()
@@ -113,6 +121,7 @@ bool LevelData::loadFromFile(const QString& filePath)
         return false;
     }
     
+    setCustomLevel(true, filePath);
     return loadFromJson(doc.object());
 }
 
@@ -205,6 +214,27 @@ bool LevelData::loadFromJson(const QJsonObject& jsonObj)
         objective.description = objObj["description"].toString();
         
         addObjective(objective);
+    }
+    
+    // 自动生成目标：如果关卡没有设置目标但包含青菜，自动创建青菜收集目标
+    if (level_objectives.isEmpty()) {
+        int vegetableCount = 0;
+        for (const auto& element : game_elements) {
+            if (element.element_type == GameElementType::Vegetable) {
+                vegetableCount++;
+            }
+        }
+        
+        if (vegetableCount > 0) {
+            LevelObjective vegetableObjective;
+            vegetableObjective.objective_type = "collect_vegetables";
+            vegetableObjective.target_count = vegetableCount;
+            vegetableObjective.current_count = 0;
+            vegetableObjective.description = QString("收集所有青菜 (%1/%2)").arg(0).arg(vegetableCount);
+            
+            addObjective(vegetableObjective);
+            qDebug() << "自动为关卡生成青菜收集目标，数量：" << vegetableCount;
+        }
     }
     
     return true;

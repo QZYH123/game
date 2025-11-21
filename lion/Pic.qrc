@@ -1,53 +1,56 @@
 <RCC>
-    <qresource prefix="/back">
-        <file>Picture/MenuBack.jpg</file>
-        <file>Picture/menu.jpg</file>
-        <file>Picture/pickbkg.png</file>
-        <file>Picture/pickbkg.jpg</file>
-        <file>Picture/setting_page.png</file>
-        <file>Picture/gamebkg.jpg</file>
-    </qresource>
-    <qresource prefix="/ui">
-        <file>Picture/button.jpg</file>
-        <file>Picture/button_y.png</file>
-        <file>Picture/title.png</file>
-        <file>Picture/backbtn.png</file>
-    </qresource>
-    <qresource prefix="/lion">
-        <file>Picture/left_1.jpg</file>
-        <file>Picture/left_2.jpg</file>
-        <file>Picture/left_3.jpg</file>
-        <file>Picture/left_4.jpg</file>
-        <file>Picture/left_1.png</file>
-        <file>Picture/left_2.png</file>
-        <file>Picture/left_3.png</file>
-        <file>Picture/left_4.png</file>
-        <file>Picture/right_1.jpg</file>
-        <file>Picture/right_2.jpg</file>
-        <file>Picture/right_3.jpg</file>
-        <file>Picture/right_4.jpg</file>
-        <file>Picture/right_1.png</file>
-        <file>Picture/right_2.png</file>
-        <file>Picture/right_3.png</file>
-        <file>Picture/right_4.png</file>
-        <file>Picture/jump_1.jpg</file>
-        <file>Picture/jump_2.jpg</file>
-        <file>Picture/jump_1.png</file>
-        <file>Picture/jump_2.png</file>
-        <file>Picture/down_1.jpg</file>
-        <file>Picture/down_2.jpg</file>
-        <file>Picture/down_1.png</file>
-        <file>Picture/down_2.png</file>
-    </qresource>
     <qresource prefix="/">
-        <file>res/stone11.png</file>
-        <file>sounds/bgm1.mp3</file>
-        <file>sounds/bgm2.mp3</file>
-        <file>sounds/bgm3.mp3</file>
-        <file>sounds/Click.mp3</file>
-        <file>sounds/Float.mp3</file>
-        <file>sounds/Jump.mp3</file>
-        <file>sounds/Pick.mp3</file>
-        <file>sounds/Win.mp3</file>
+        <file alias="images/MenuBack.jpg">Picture/MenuBack.jpg</file>
+        <file alias="images/menu.jpg">Picture/menu.jpg</file>
+        <file alias="images/pickbkg.png">Picture/pickbkg.png</file>
+        <file alias="images/pickbkg.jpg">Picture/pickbkg.jpg</file>
+        <file alias="images/setting_page.png">Picture/setting_page.png</file>
+        <file alias="images/gamebkg.jpg">Picture/gamebkg.jpg</file>
+        <file alias="images/button.jpg">Picture/button.jpg</file>
+        <file alias="images/button_y.png">Picture/button_y.png</file>
+        <file alias="images/title.png">Picture/title.png</file>
+        <file alias="images/backbtn.png">Picture/backbtn.png</file>
+        <file alias="images/door.png">Picture/door.png</file>
+        <file alias="images/vegetable.png">Picture/vegetable.png</file>
+        <file alias="images/left_1.jpg">Picture/left_1.jpg</file>
+        <file alias="images/left_2.jpg">Picture/left_2.jpg</file>
+        <file alias="images/left_3.jpg">Picture/left_3.jpg</file>
+        <file alias="images/left_4.jpg">Picture/left_4.jpg</file>
+        <file alias="images/left_1.png">Picture/left_1.png</file>
+        <file alias="images/left_2.png">Picture/left_2.png</file>
+        <file alias="images/left_3.png">Picture/left_3.png</file>
+        <file alias="images/left_4.png">Picture/left_4.png</file>
+        <file alias="images/right_1.jpg">Picture/right_1.jpg</file>
+        <file alias="images/right_2.jpg">Picture/right_2.jpg</file>
+        <file alias="images/right_3.jpg">Picture/right_3.jpg</file>
+        <file alias="images/right_4.jpg">Picture/right_4.jpg</file>
+        <file alias="images/right_1.png">Picture/right_1.png</file>
+        <file alias="images/right_2.png">Picture/right_2.png</file>
+        <file alias="images/right_3.png">Picture/right_3.png</file>
+        <file alias="images/right_4.png">Picture/right_4.png</file>
+        <file alias="images/jump_1.jpg">Picture/jump_1.jpg</file>
+        <file alias="images/jump_2.jpg">Picture/jump_2.jpg</file>
+        <file alias="images/jump_1.png">Picture/jump_1.png</file>
+        <file alias="images/jump_2.png">Picture/jump_2.png</file>
+        <file alias="images/down_1.jpg">Picture/down_1.jpg</file>
+        <file alias="images/down_2.jpg">Picture/down_2.jpg</file>
+        <file alias="images/down_1.png">Picture/down_1.png</file>
+        <file alias="images/down_2.png">Picture/down_2.png</file>
+        <file alias="images/archery.png">Picture/archery.png</file>
+        <file alias="images/arrow.png">Picture/arrow.png</file>
+        <file alias="images/moving_platform.png">Picture/moving_platform.png</file>
+        <file alias="images/switch.svg">Picture/switch.svg</file>
+        <file alias="images/background.png">Picture/background.png</file>
+        <file alias="images/platform.png">Picture/platform.png</file>
+        <file alias="images/start.png">Picture/start.png</file>
+        <file alias="images/stone11.png">res/stone11.png</file>
+        <file alias="sounds/bgm1.mp3">sounds/bgm1.mp3</file>
+        <file alias="sounds/bgm2.mp3">sounds/bgm2.mp3</file>
+        <file alias="sounds/bgm3.mp3">sounds/bgm3.mp3</file>
+        <file alias="sounds/Click.mp3">sounds/Click.mp3</file>
+        <file alias="sounds/Float.mp3">sounds/Float.mp3</file>
+        <file alias="sounds/Jump.mp3">sounds/Jump.mp3</file>
+        <file alias="sounds/Pick.mp3">sounds/Pick.mp3</file>
+        <file alias="sounds/Win.mp3">sounds/Win.mp3</file>
     </qresource>
 </RCC>
